@@ -9,7 +9,8 @@
     BASE: 'https://api-s.anixsekai.com',
     VERSION_CODE: '25082901',
     STATIC_FALLBACK: 'https://s.anixmirai.com',
-    IFRAME: 'https://anixmirai.com/iframe?url='
+    IFRAME: 'https://anixmirai.com/iframe?url=',
+    UA: 'AnixartApp/9.0 BETA (Android 13; SDK 33)'
   };
 
   var WEEK = [['monday', 'Понедельник'], ['tuesday', 'Вторник'], ['wednesday', 'Среда'],
@@ -58,7 +59,7 @@
     opt = opt || {};
     var init = {
       method: method, mode: 'cors', credentials: 'omit', cache: 'no-store',
-      headers: { 'Accept': 'application/json' }
+      headers: { 'Accept': 'application/json', 'User-Agent': CFG.UA }
     };
     if (opt.body !== undefined) {
       init.headers['Content-Type'] = 'application/json';
@@ -92,25 +93,148 @@
   }
 
   var api = {
+    /* ===================== config ===================== */
     toggles: function () { return req('GET', '/config/toggles', { query: { version_code: CFG.VERSION_CODE, is_beta: 'true' } }); },
+    urls: function () { return req('GET', '/config/urls', { query: { is_beta: 'true' } }); },
+
+    /* ===================== auth ===================== */
     signIn: function (login, password) { return req('POST', '/auth/signIn', { query: { login: login, password: password } }); },
+    signUp: function (body) { return req('POST', '/auth/signUp', { body: body }); },
+    verify: function (body) { return req('POST', '/auth/verify', { body: body }); },
+    restore: function (body) { return req('POST', '/auth/restore', { body: body }); },
+    restoreVerify: function (body) { return req('POST', '/auth/restore/verify', { body: body }); },
+
+    /* ===================== release ===================== */
     release: function (id) { return req('GET', '/release/' + id, { query: { extended_mode: 'true' } }); },
     random: function () { return req('GET', '/release/random', { query: { extended_mode: 'true' } }); },
+    related: function (id, page) { return req('GET', '/related/' + id + '/' + (page || 0)); },
+    streamingPlatforms: function (id) { return req('GET', '/release/streaming/platform/' + id); },
+    releaseVideos: function (id) { return req('GET', '/video/release/' + id); },
+    releaseVideosCategory: function (id, category, page) { return req('GET', '/video/release/' + id + '/category/' + category + '/' + (page || 0)); },
+    voteAdd: function (id, vote) { return req('GET', '/release/vote/add/' + id + '/' + vote); },
+    voteDelete: function (id) { return req('GET', '/release/vote/delete/' + id); },
+
+    /* ===================== favorites & lists ===================== */
+    favorites: function (page) { return req('GET', '/favorite/all/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
+    favoriteAdd: function (id) { return req('GET', '/favorite/add/' + id); },
+    favoriteDelete: function (id) { return req('GET', '/favorite/delete/' + id); },
+    listAdd: function (list, id) { return req('GET', '/profile/list/add/' + list + '/' + id); },
+    listDelete: function (list, id) { return req('GET', '/profile/list/delete/' + list + '/' + id); },
+    listAll: function (lid, page) { return req('GET', '/profile/list/all/' + lid + '/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
+
+    /* ===================== search ===================== */
     search: function (q, page) { return req('POST', '/search/releases/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchProfiles: function (q, page) { return req('POST', '/search/profiles/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchCollections: function (q, page) { return req('POST', '/search/collections/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchFavoriteCollections: function (q, page) { return req('POST', '/search/favoriteCollections/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchProfileCollections: function (q, page) { return req('POST', '/search/profileCollections/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchFavorites: function (q, page) { return req('POST', '/search/favorites/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchHistory: function (q, page) { return req('POST', '/search/history/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchProfileList: function (list, q, page) { return req('POST', '/search/profile/list/' + list + '/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchChannels: function (q, page) { return req('POST', '/search/channels/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchArticles: function (q, page) { return req('POST', '/search/articles/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchFeed: function (q, page) { return req('POST', '/search/feed/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+    searchChannelSubscribers: function (id, q, page) { return req('POST', '/search/channel/' + id + '/subscribers/' + (page || 0), { body: { query: q, searchBy: 0 } }); },
+
+    /* ===================== filter ===================== */
     filter: function (page, sort, genres) {
       var b = { sort: sort === undefined ? 3 : sort };
       if (genres && genres.length) b.genres = genres;
       return req('POST', '/filter/' + (page || 0), { body: b, query: { extended_mode: 'true' } });
     },
+    filterBody: function (page, body) { return req('POST', '/filter/' + (page || 0), { body: body, query: { extended_mode: 'true' } }); },
+    typeAll: function () { return req('GET', '/type/all'); },
+
+    /* ===================== schedule / discover ===================== */
     schedule: function () { return req('GET', '/schedule'); },
-    favorites: function (page) { return req('GET', '/favorite/all/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
-    listAll: function (lid, page) { return req('GET', '/profile/list/all/' + lid + '/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
+    discoverWatching: function (page) { return req('GET', '/discover/watching/' + (page || 0)); },
+    discoverDiscussing: function () { return req('GET', '/discover/discussing'); },
+    discoverRecommendations: function (page) { return req('GET', '/discover/recommendations/' + (page || 0)); },
+    discoverInteresting: function () { return req('GET', '/discover/interesting'); },
+    discoverComments: function () { return req('GET', '/discover/comments'); },
+
+    /* ===================== profile ===================== */
     profile: function (id) { return req('GET', '/profile/' + id); },
-    searchProfiles: function (q) { return req('POST', '/search/profiles/0', { body: { query: q, searchBy: 0 } }); },
+    profileInfo: function () { return req('GET', '/profile/info'); },
+    userList: function (id, list, page) { return req('GET', '/profile/list/all/' + id + '/' + list + '/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
+    history: function (page) { return req('GET', '/history/' + (page || 0)); },
+    friendRecommendations: function () { return req('GET', '/profile/friend/recomendations'); },
+    friends: function (id, page) { return req('GET', '/profile/friend/all/' + id + '/' + (page || 0)); },
+    friendRequestsLast: function (type) { return req('GET', '/profile/friend/requests/' + type + '/last'); },
+    friendRequests: function (type, page) { return req('GET', '/profile/friend/requests/' + type + '/' + (page || 0)); },
+    friendRequestSend: function (id) { return req('GET', '/profile/friend/request/send/' + id); },
+    friendRequestRemove: function (id) { return req('GET', '/profile/friend/request/remove/' + id); },
+    friendRequestHide: function (id) { return req('GET', '/profile/friend/request/hide/' + id); },
+    profileSocial: function (id) { return req('GET', '/profile/social/' + id); },
+    achievement: function (id) { return req('GET', '/achivement/get/' + id); },
+    blocklist: function (page) { return req('GET', '/profile/blocklist/all/' + (page || 0)); },
+    blockAdd: function (id) { return req('GET', '/profile/blocklist/add/' + id); },
+    blockRemove: function (id) { return req('GET', '/profile/blocklist/remove/' + id); },
+    votedReleases: function (id, page) { return req('GET', '/profile/vote/release/voted/' + id + '/' + (page || 0)); },
+    unvotedReleases: function (page) { return req('GET', '/profile/vote/release/unvoted/' + (page || 0)); },
+    roleAll: function (page, id) { return req('GET', '/role/all/' + (page || 0) + '/' + id); },
+    channelSubscriptions: function (page) { return req('GET', '/channel/subscription/all/' + (page || 0)); },
+    channelSubCount: function () { return req('GET', '/channel/subscription/count'); },
+    exportBookmarks: function (body) { return req('POST', '/export/bookmarks', { body: body }); },
+
+    /* ===================== notifications ===================== */
+    notifCount: function () { return req('GET', '/notification/count'); },
+    notifAll: function (page) { return req('GET', '/notification/all/' + (page || 0)); },
+    notifFriends: function (page) { return req('GET', '/notification/friends/' + (page || 0)); },
+    notifRelatedRelease: function (page) { return req('GET', '/notification/related/release/' + (page || 0)); },
+    notifEpisodes: function (page) { return req('GET', '/notification/episodes/' + (page || 0)); },
+    notifReleaseComments: function (page) { return req('GET', '/notification/releaseComments/' + (page || 0)); },
+    notifCollectionComments: function (page) { return req('GET', '/notification/collectionComments/' + (page || 0)); },
+    notifArticles: function (page) { return req('GET', '/notification/articles/' + (page || 0)); },
+    notifRead: function () { return req('GET', '/notification/read'); },
+    notifDelete: function (type, id) { return req('GET', '/notification/' + type + '/delete/' + id); },
+    notifDeleteAll: function () { return req('GET', '/notification/delete/all'); },
+
+    /* ===================== collections ===================== */
+    collections: function (page, where) { return req('GET', '/collection/all/' + (page || 0), { query: { where: where } }); },
+    collection: function (id) { return req('GET', '/collection/' + id); },
+    collectionReleases: function (id, page) { return req('GET', '/collection/' + id + '/releases/' + (page || 0)); },
+    collectionFavAll: function (page) { return req('GET', '/collectionFavorite/all/' + (page || 0)); },
+    collectionFavAdd: function (id) { return req('GET', '/collectionFavorite/add/' + id); },
+    collectionFavDelete: function (id) { return req('GET', '/collectionFavorite/delete/' + id); },
+    collectionsByRelease: function (id, page) { return req('GET', '/collection/all/release/' + id + '/' + (page || 0)); },
+    collectionsByProfile: function (id, page) { return req('GET', '/collection/all/profile/' + id + '/' + (page || 0)); },
+    collectionCreate: function (body) { return req('POST', '/collectionMy/create', { body: body }); },
+    collectionEdit: function (id, body) { return req('POST', '/collectionMy/edit/' + id, { body: body }); },
+    collectionEditImage: function (id, body) { return req('POST', '/collectionMy/editImage/' + id, { body: body }); },
+    collectionDelete: function (id) { return req('GET', '/collectionMy/delete/' + id); },
+    collectionRandomRelease: function (id) { return req('GET', '/release/collection/' + id + '/random'); },
+    collectionAddRelease: function (id) { return req('GET', '/collectionMy/release/add/' + id); },
+
+    /* ===================== release comments ===================== */
+    releaseComments: function (id, page, sort) { return req('GET', '/release/comment/all/' + id + '/' + (page || 0), { query: { sort: sort } }); },
+    releaseCommentReplies: function (id, page) { return req('GET', '/release/comment/replies/' + id + '/' + (page || 0)); },
+    releaseCommentVotes: function (id, page) { return req('GET', '/release/comment/votes/' + id + '/' + (page || 0)); },
+    releaseCommentAdd: function (id, body) { return req('POST', '/release/comment/add/' + id, { body: body }); },
+    releaseCommentEdit: function (id, body) { return req('POST', '/release/comment/edit/' + id, { body: body }); },
+    releaseCommentDelete: function (id) { return req('GET', '/release/comment/delete/' + id); },
+    releaseCommentVote: function (id, vote) { return req('GET', '/release/comment/vote/' + id + '/' + vote); },
+
+    /* ===================== collection comments ===================== */
+    collectionCommentAll: function (id, page, sort) { return req('GET', '/collection/comment/all/' + id + '/' + (page || 0), { query: { sort: sort } }); },
+    collectionComment: function (id) { return req('GET', '/collection/comment/' + id); },
+    collectionCommentReplies: function (id, page) { return req('GET', '/collection/comment/replies/' + id + '/' + (page || 0)); },
+    collectionCommentVotes: function (id, page) { return req('GET', '/collection/comment/votes/' + id + '/' + (page || 0)); },
+    collectionCommentAdd: function (id, body) { return req('POST', '/collection/comment/add/' + id, { body: body }); },
+    collectionCommentEdit: function (id, body) { return req('POST', '/collection/comment/edit/' + id, { body: body }); },
+    collectionCommentDelete: function (id) { return req('GET', '/collection/comment/delete/' + id); },
+    collectionCommentVote: function (id, vote) { return req('GET', '/collection/comment/vote/' + id + '/' + vote); },
+
+    /* ===================== episode ===================== */
     dubbers: function (id) { return req('GET', '/episode/' + id); },
     sources: function (id, dub) { return req('GET', '/episode/' + id + '/' + dub); },
     episodes: function (id, dub, src) { return req('GET', '/episode/' + id + '/' + dub + '/' + src); },
-    target: function (id, src, pos) { return req('GET', '/episode/target/' + id + '/' + src + '/' + pos); }
+    target: function (id, src, pos) { return req('GET', '/episode/target/' + id + '/' + src + '/' + pos); },
+    episodeWatch: function (id, src, pos) { return req('GET', '/episode/watch/' + id + '/' + src + '/' + pos); },
+    episodeUnwatch: function (id, src, pos) { return req('GET', '/episode/unwatch/' + id + '/' + src + '/' + pos); },
+    historyAdd: function (id, src, pos) { return req('GET', '/history/add/' + id + '/' + src + '/' + pos); },
+    historyDelete: function (id) { return req('GET', '/history/delete/' + id); },
+    episodeUpdates: function (id, page) { return req('GET', '/episode/updates/' + id + '/' + (page || 0)); }
   };
 
   /* ------------------------- картинки ---------------------------- */

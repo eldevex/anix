@@ -61,6 +61,9 @@
       + a('index.html?p=genres', 'Жанры', p === 'genres');
     if (Auth.isAuth()) {
       html += a('index.html?p=lists&list=watching', 'Мои списки', p === 'lists')
+        + a('index.html?p=notifs', 'Уведомления', p === 'notifs')
+        + a('index.html?p=friends', 'Друзья', p === 'friends')
+        + a('index.html?p=collections', 'Коллекции', p === 'collections')
         + a('index.html?p=profile', 'Профиль', p === 'profile')
         + a('index.html?p=mylists', 'Коллекции', p === 'mylists');
     }
@@ -220,6 +223,9 @@
            '<div class="player-selectors" id="plSels"></div>' +
            '<div class="player-wrap" id="plFrame"><div class="empty">Загрузка плеера…</div></div></div>';
     }
+    h += '<div class="comments" id="comments" data-id="' + id + '">' +
+         '<div class="page-title">Комментарии</div>' +
+         '<div id="commentsList"><div class="empty">Загрузка комментариев…</div></div></div>';
     return {
       html: h,
       after: function () {
@@ -236,8 +242,594 @@
         }
         var root = document.getElementById('releasePlayer');
         if (root) loadPlayer(root, id, savedState(id), 'embed');
+        loadComments(id, 0, false);
       }
     };
+  }
+
+  /* ---------------------- комментарии ----------------------------- */
+  var CMT_SORT = [[1, 'Новые'], [2, 'Старые'], [3, 'Популярные']];
+  var cmtState = { id: 0, page: 0, sort: 3 };
+
+  function fmtDate(ts) {
+    if (!ts) return '';
+    try { return new Date(ts * 1000).toLocaleString('ru-RU'); } catch (e) { return ''; }
+  }
+  function cmtVoteOf(c) {
+    var v = c && c.vote;
+    if (v && typeof v === 'object') return { likes: num(v.likes, 0), dislikes: num(v.dislikes, 0), vote: num(v.vote, 0) };
+    return { likes: num(c && c.likes, 0), dislikes: num(c && c.dislikes, 0), vote: 0 };
+  }
+  function cmtProfile(c) {
+    var p = (c && c.profile) || {};
+    var login = p.login || ('user' + num(p.id, 0));
+    var av = C.imgUrl(p);
+    return { login: login, id: num(p.id, 0), av: av };
+  }
+
+  function commentItem(c, level) {
+    level = level || 0;
+    var id = num(c.id, 0);
+    var pr = cmtProfile(c);
+    var vv = cmtVoteOf(c);
+    var msg = c.message || c.text || '';
+    if (c.is_deleted) msg = '<i style="color:var(--text-mute)">Комментарий удалён</i>';
+    else msg = esc(msg).replace(/\n/g, '<br>');
+    var myId = (Auth.profile() && num(Auth.profile().id, 0)) || 0;
+    var mine = myId && pr.id === myId;
+    var h = '<div class="cmt" data-id="' + id + '" style="margin-left:' + (level * 18) + 'px">';
+    h += '<div class="cmt-head">';
+    h += pr.av ? '<img class="cmt-av" src="' + esc(pr.av) + '" alt="" loading="lazy">' : '<div class="cmt-av ph">' + esc(pr.login.slice(0, 1).toUpperCase()) + '</div>';
+    h += '<div class="cmt-meta"><b>' + esc(pr.login) + '</b>';
+    if (c.is_edited) h += ' <span class="cmt-tag">изм.</span>';
+    h += '<span class="cmt-date">' + esc(fmtDate(c.timestamp || c.date)) + '</span></div></div>';
+    h += '<div class="cmt-body">' + msg + '</div>';
+    if (!c.is_deleted) {
+      h += '<div class="cmt-actions">';
+      h += '<button class="cmt-act" data-act="like" data-id="' + id + '"> ' + vv.likes + '</button>';
+      h += '<button class="cmt-act" data-act="dislike" data-id="' + id + '"> ' + vv.dislikes + '</button>';
+      if (Auth.isAuth()) {
+        h += '<button class="cmt-act" data-act="reply" data-id="' + id + '" data-login="' + esc(pr.login) + '">Ответить</button>';
+        if (mine) h += '<button class="cmt-act" data-act="del" data-id="' + id + '">Удалить</button>';
+      }
+      var rc = num(c.replies_count, 0) || num(c.replies, 0);
+      if (rc) h += '<button class="cmt-act" data-act="replies" data-id="' + id + '">Ответы (' + rc + ')</button>';
+      h += '</div>';
+    }
+    h += '<div class="cmt-replies" id="cmtReplies' + id + '"></div>';
+    if (level === 0) {
+      h += '<div class="cmt-replybox" id="cmtReply' + id + '" style="display:none"></div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function commentForm(id, parentId, placeholder) {
+    return '<div class="cmt-form" id="cmtForm' + (parentId || id) + '">' +
+      '<textarea class="cmt-input" id="cmtText' + (parentId || id) + '" rows="2" placeholder="' + esc(placeholder || 'Написать комментарий…') + '"></textarea>' +
+      '<button class="btn primary sm" data-act="send" data-id="' + id + '" data-parent="' + (parentId || 0) + '">Отправить</button>' +
+      (parentId ? '<button class="btn sm" data-act="cancel" data-parent="' + parentId + '">Отмена</button>' : '') +
+      '</div>';
+  }
+
+  async function loadComments(id, page, append) {
+    cmtState.id = id;
+    cmtState.page = page || 0;
+    var box = document.getElementById('commentsList');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка комментариев…</div>';
+    var d;
+    try { d = await api.releaseComments(id, cmtState.page, cmtState.sort); }
+    catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.comments || d.content)) || [];
+
+    var toolbar = '<div class="cmt-toolbar"><div class="cmt-sorts">' +
+      CMT_SORT.map(function (s) { return '<button class="cmt-sort' + (cmtState.sort === s[0] ? ' on' : '') + '" data-sort="' + s[0] + '">' + s[1] + '</button>'; }).join('') +
+      '</div><button class="btn sm" data-act="refresh"></button></div>';
+    var form = Auth.isAuth() ? commentForm(id, 0, 'Написать комментарий…')
+      : notice('Чтобы писать комментарии, <a href="index.html?p=login">войдите</a>.', '');
+    var body = list.length ? list.map(function (c) { return commentItem(c, 0); }).join('')
+      : '<div class="empty">Комментариев пока нет.</div>';
+
+    if (append) {
+      var old = box.querySelector('.cmt-list');
+      if (old) old.insertAdjacentHTML('beforeend', list.map(function (c) { return commentItem(c, 0); }).join(''));
+    } else {
+      box.innerHTML = toolbar + form + '<div class="cmt-list">' + body + '</div>';
+    }
+
+    // pagination
+    var last = list.length ? list[list.length - 1] : null;
+    if (!append || last) {
+      var moreWrap = document.getElementById('cmtMoreWrap');
+      if (moreWrap) moreWrap.remove();
+      box.insertAdjacentHTML('beforeend', '<div id="cmtMoreWrap" style="margin-top:12px">' +
+        (list.length >= 20 ? '<button class="btn sm" data-act="more">Показать ещё</button>' : '') + '</div>');
+    }
+    wireComments();
+  }
+
+  function cmtReplyToggle(cid, login) {
+    var box = document.getElementById('cmtReply' + cid);
+    if (!box) return;
+    if (box.style.display === 'none') {
+      box.style.display = 'block';
+      box.innerHTML = commentForm(cmtState.id, cid, 'Ответ @' + login + '…');
+    } else {
+      box.style.display = 'none';
+    }
+  }
+
+  async function loadReplies(cid) {
+    var box = document.getElementById('cmtReplies' + cid);
+    if (!box) return;
+    if (box.getAttribute('data-open') === '1') { box.innerHTML = ''; box.removeAttribute('data-open'); return; }
+    box.innerHTML = '<div class="empty" style="padding:10px 0">Загрузка…</div>';
+    var d;
+    try { d = await api.releaseCommentReplies(cid, 0); }
+    catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.comments || d.content)) || [];
+    box.setAttribute('data-open', '1');
+    box.innerHTML = list.length ? list.map(function (c) { return commentItem(c, 1); }).join('')
+      : '<div class="empty" style="padding:10px 0">Нет ответов.</div>';
+  }
+
+  async function doCommentAction(act, id, parent) {
+    if (!Auth.isAuth()) { location.href = 'index.html?p=login'; return; }
+    try {
+      if (act === 'send') {
+        var ta = document.getElementById('cmtText' + (parent || id));
+        var text = ta ? ta.value.trim() : '';
+        if (!text) return;
+        var body = { message: text };
+        if (parent) body.parent_comment = parent;
+        await api.releaseCommentAdd(id, body);
+        loadComments(id, 0, false);
+      } else if (act === 'like') {
+        await api.releaseCommentVote(id, 2); loadComments(cmtState.id, 0, false);
+      } else if (act === 'dislike') {
+        await api.releaseCommentVote(id, 1); loadComments(cmtState.id, 0, false);
+      } else if (act === 'del') {
+        if (!confirm('Удалить комментарий?')) return;
+        await api.releaseCommentDelete(id); loadComments(cmtState.id, 0, false);
+      }
+    } catch (e) { alert(e && e.message ? e.message : e); }
+  }
+
+  function wireComments() {
+    var box = document.getElementById('commentsList');
+    if (!box || box.getAttribute('data-wired') === '1') return;
+    box.setAttribute('data-wired', '1');
+    box.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('button') : null;
+      if (!t) return;
+      var sort = t.getAttribute('data-sort');
+      if (sort) { cmtState.sort = num(sort, 3); loadComments(cmtState.id, 0, false); return; }
+      var act = t.getAttribute('data-act');
+      if (!act) return;
+      if (act === 'more') { loadComments(cmtState.id, cmtState.page + 1, true); return; }
+      if (act === 'refresh') { loadComments(cmtState.id, 0, false); return; }
+      var id = num(t.getAttribute('data-id'), 0);
+      if (act === 'reply') { cmtReplyToggle(id, t.getAttribute('data-login') || ''); return; }
+      if (act === 'replies') { loadReplies(id); return; }
+      if (act === 'cancel') { var pb = document.getElementById('cmtReply' + id); if (pb) pb.style.display = 'none'; return; }
+      doCommentAction(act, id, num(t.getAttribute('data-parent'), 0));
+    });
+  }
+
+  /* ---------------------- уведомления ----------------------------- */
+  var NOTIF_TABS = [
+    ['all', 'Все', 'notifAll'],
+    ['friends', 'Друзья', 'notifFriends'],
+    ['release', 'Релизы', 'notifRelatedRelease'],
+    ['episodes', 'Серии', 'notifEpisodes'],
+    ['relcomments', 'Коммент. к релизам', 'notifReleaseComments'],
+    ['colcomments', 'Коммент. к коллекциям', 'notifCollectionComments'],
+    ['articles', 'Статьи', 'notifArticles']
+  ];
+  var ntfState = { tab: 'all', page: 0 };
+
+  function ntfIcon(t) {
+    switch (num(t, 0)) {
+      case 0: return '';   // серия/релиз
+      case 1: return '';   // комментарий
+      case 2: return '';   // друзья
+      case 3: return '';
+      case 4: return '⭐';
+      default: return '';
+    }
+  }
+  function ntfItem(n) {
+    var id = num(n.id, 0);
+    var rel = n.release || {};
+    var rid = num(rel.id || n.release_id, 0);
+    var prof = n.profile || {};
+    var login = prof.login || '';
+    var txt = n.text || n.message || n.title || 'Уведомление';
+    var date = n.timestamp || n.date || n.time;
+    var isNew = !(n.is_read || n.watched);
+    var h = '<div class="ntf' + (isNew ? ' new' : '') + '" data-id="' + id + '">';
+    h += '<div class="ntf-ico">' + ntfIcon(n.type) + '</div>';
+    h += '<div class="ntf-main">';
+    if (login) h += '<div class="ntf-who">@' + esc(login) + '</div>';
+    h += '<div class="ntf-txt">' + esc(txt) + '</div>';
+    if (rid) h += '<a class="ntf-link" href="index.html?p=release&id=' + rid + '">' + esc(rel.title_ru || rel.title_original || 'Открыть релиз') + ' →</a>';
+    h += '<div class="ntf-date">' + esc(fmtDate(date)) + '</div>';
+    h += '</div>';
+    h += '<div class="ntf-acts"><button class="ntf-del" data-act="del" data-id="' + id + '" title="Удалить">✕</button></div>';
+    h += '</div>';
+    return h;
+  }
+
+  async function loadNotifs(tab, page, append) {
+    ntfState.tab = tab || 'all';
+    ntfState.page = page || 0;
+    var box = document.getElementById('ntfList');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка уведомлений…</div>';
+    var meta = null;
+    for (var i = 0; i < NOTIF_TABS.length; i++) { if (NOTIF_TABS[i][0] === ntfState.tab) meta = NOTIF_TABS[i]; }
+    var fn = api[meta ? meta[2] : 'notifAll'];
+    var d;
+    try { d = await fn(ntfState.page); }
+    catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.notifications || d.content)) || [];
+    var body = list.length ? list.map(ntfItem).join('') : '<div class="empty">Уведомлений нет.</div>';
+    if (append) {
+      var old = box.querySelector('.ntf-list');
+      if (old) old.insertAdjacentHTML('beforeend', list.map(ntfItem).join(''));
+    } else {
+      box.innerHTML = '<div class="ntf-list">' + body + '</div>';
+    }
+    var moreWrap = document.getElementById('ntfMoreWrap');
+    if (moreWrap) moreWrap.remove();
+    box.insertAdjacentHTML('beforeend', '<div id="ntfMoreWrap" style="margin-top:12px">' +
+      (list.length >= 20 ? '<button class="btn sm" data-act="more">Показать ещё</button>' : '') + '</div>');
+    wireNotifs();
+  }
+
+  function wireNotifs() {
+    var box = document.getElementById('ntfList');
+    if (!box || box.getAttribute('data-wired') === '1') return;
+    box.setAttribute('data-wired', '1');
+    box.addEventListener('click', function (e) {
+      var t = e.target.closest ? e.target.closest('button,a') : null;
+      if (!t) return;
+      var act = t.getAttribute('data-act');
+      if (act === 'more') { loadNotifs(ntfState.tab, ntfState.page + 1, true); return; }
+      if (act === 'del') {
+        var id = num(t.getAttribute('data-id'), 0);
+        api.notifDelete(ntfState.tab, id).then(function () { loadNotifs(ntfState.tab, 0, false); }).catch(function (er) { alert(er.message || er); });
+      }
+    });
+  }
+
+  async function viewNotifs(q) {
+    if (!Auth.isAuth()) return { html: notice(' Уведомления доступны после <a href="index.html?p=login">входа</a>.', 'err') };
+    var tab = q.tab || 'all';
+    ntfState.tab = tab; ntfState.page = 0;
+    var tabs = '<div class="ntf-tabs">' + NOTIF_TABS.map(function (t) {
+      return '<button class="ntf-tab' + (t[0] === tab ? ' on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+    var actions = '<div class="ntf-top"><button class="btn sm" data-nact="read">Отметить прочитанными</button>' +
+      '<button class="btn sm" data-nact="clear">Очистить все</button></div>';
+    return {
+      html: '<div class="page-title"> Уведомления</div>' + tabs + actions +
+            '<div id="ntfList"><div class="empty">Загрузка…</div></div>',
+      after: function () {
+        var root = document.getElementById('ntfList');
+        if (!root) return;
+        // tabs + actions
+        var page = document.getElementById('app');
+        var tabBar = page ? page.querySelector('.ntf-tabs') : null;
+        if (tabBar) tabBar.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('button[data-tab]') : null;
+          if (!b) return;
+          location.href = 'index.html?p=notifs&tab=' + b.getAttribute('data-tab');
+        });
+        var top = page ? page.querySelector('.ntf-top') : null;
+        if (top) top.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('button[data-nact]') : null;
+          if (!b) return;
+          var act = b.getAttribute('data-nact');
+          var pr = act === 'read' ? api.notifRead() : api.notifDeleteAll();
+          pr.then(function () { loadNotifs(ntfState.tab, 0, false); }).catch(function (er) { alert(er.message || er); });
+        });
+        loadNotifs(tab, 0, false);
+      }
+    };
+  }
+
+  /* ---------------------- друзья и подписки ----------------------- */
+  var frState = { tab: 'friends', page: 0 };
+
+  function myId() { return num((Auth.profile() || {}).id, 0); }
+
+  function profCard(p) {
+    var id = num(p.id, 0);
+    var login = p.login || ('user' + id);
+    var av = C.imgUrl(p);
+    var tags = [];
+    if (p.is_online) tags.push('');
+    if (p.is_verified) tags.push('✅');
+    if (p.is_sponsor) tags.push('✨');
+    var h = '<div class="fr-item">';
+    h += av ? '<img class="cmt-av" src="' + esc(av) + '" alt="" loading="lazy">' : '<div class="cmt-av ph">' + esc(login.slice(0, 1).toUpperCase()) + '</div>';
+    h += '<div class="fr-main"><div class="fr-login">@' + esc(login) + ' ' + tags.join('') + '</div>';
+    if (p.status) h += '<div class="fr-status">' + esc(p.status) + '</div>';
+    h += '</div>';
+    h += '<div class="fr-acts"><a class="btn sm primary" href="index.html?p=profile&id=' + id + '">Открыть →</a></div>';
+    h += '</div>';
+    return h;
+  }
+
+  async function loadFriends(tab, page, append) {
+    frState.tab = tab; frState.page = page || 0;
+    var box = document.getElementById('frList');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка…</div>';
+    var d, list = [], meta = null;
+    try {
+      if (tab === 'friends') d = await api.friends(myId(), frState.page);
+      else if (tab === 'in') d = await api.friendRequests(1, frState.page);
+      else if (tab === 'out') d = await api.friendRequests(0, frState.page);
+      else if (tab === 'reco') d = await api.friendRecommendations();
+      else if (tab === 'subs') d = await api.channelSubscriptions(frState.page);
+    } catch (e) { box.innerHTML = errBox(e); return; }
+    list = (d && (d.content || d.profiles || d.friends || d.channels || d.subscriptions)) || [];
+    if (!list.length) { box.innerHTML = '<div class="empty">Пусто.</div>'; return; }
+    var html = list.map(function (p) {
+      if (p.channel) p = p.channel; // subscriptions may wrap
+      return profCard(p);
+    }).join('');
+    if (append) {
+      var old = box.querySelector('.fr-list');
+      if (old) old.insertAdjacentHTML('beforeend', html);
+    } else {
+      box.innerHTML = '<div class="fr-list">' + html + '</div>';
+    }
+    var mw = document.getElementById('frMoreWrap'); if (mw) mw.remove();
+    box.insertAdjacentHTML('beforeend', '<div id="frMoreWrap" style="margin-top:12px">' +
+      (list.length >= 25 ? '<button class="btn sm" data-fact="more">Показать ещё</button>' : '') + '</div>');
+    wireFriends();
+  }
+
+  function wireFriends() {
+    var box = document.getElementById('frList');
+    if (!box || box.getAttribute('data-wired') === '1') return;
+    box.setAttribute('data-wired', '1');
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-fact]') : null;
+      if (!b) return;
+      if (b.getAttribute('data-fact') === 'more') loadFriends(frState.tab, frState.page + 1, true);
+    });
+  }
+
+  async function viewFriends(q) {
+    if (!Auth.isAuth()) return { html: notice(' Друзья доступны после <a href="index.html?p=login">входа</a>.', 'err') };
+    var tab = q.tab || 'friends';
+    frState.tab = tab; frState.page = 0;
+    var TABS = [['friends', 'Друзья'], ['in', 'Входящие'], ['out', 'Исходящие'], ['reco', 'Рекомендации'], ['subs', 'Подписки']];
+    var tabs = '<div class="ntf-tabs">' + TABS.map(function (t) {
+      return '<button class="ntf-tab' + (t[0] === tab ? ' on' : '') + '" data-ftab="' + t[0] + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+    return {
+      html: '<div class="page-title"> Друзья</div>' + tabs + '<div id="frList"><div class="empty">Загрузка…</div></div>',
+      after: function () {
+        var page = document.getElementById('app');
+        var bar = page ? page.querySelector('.ntf-tabs') : null;
+        if (bar) bar.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('button[data-ftab]') : null;
+          if (!b) return;
+          location.href = 'index.html?p=friends&tab=' + b.getAttribute('data-ftab');
+        });
+        loadFriends(tab, 0, false);
+      }
+    };
+  }
+
+  /* ---------------------- коллекции Anixart (API) ----------------- */
+  var colState = { tab: 'mine', page: 0 };
+
+  function colCard(c) {
+    var id = num(c.id, 0);
+    var title = c.title || 'Без названия';
+    var cnt = num(c.count || c.releases_count, 0);
+    var av = C.imgUrl(c.image ? { image: c.image } : (c.poster ? { poster: c.poster } : {}));
+    var pr = c.profile || {};
+    var h = '<div class="col-card" data-id="' + id + '">';
+    h += '<a class="col-link" href="index.html?p=collection&id=' + id + '">';
+    h += av ? '<img class="col-img" src="' + esc(av) + '" alt="" loading="lazy">' : '<div class="col-img ph"></div>';
+    h += '<div class="col-meta"><div class="col-title">' + esc(title) + '</div>';
+    h += '<div class="col-sub">' + cnt + ' релизов' + (pr.login ? ' · @' + esc(pr.login) : '') + '</div></div></a>';
+    h += '</div>';
+    return h;
+  }
+
+  function colRelRow(r) {
+    var id = num(r && r.id, 0);
+    var title = (r && (r.title_ru || r.title_original)) || 'Без названия';
+    var year = (r && r.year) || '?';
+    var ep = ((r && r.episodes_released) || 0) + '/' + ((r && r.episodes_total) || 0);
+    return '<div class="row"><img class="rposter" src="' + esc(C.imgUrl(r)) + '" alt="" loading="lazy">' +
+      '<div class="rinfo"><div class="rtitle">' + esc(title) + '</div>' +
+      '<div class="rsub">' + esc(year) + ' · ' + esc(ep) + ' эп. · ' + esc(statusName(r)) + '</div></div>' +
+      '<div class="ractions"><a class="btn sm primary" href="index.html?p=release&id=' + id + '">Открыть →</a></div></div>';
+  }
+
+  async function loadCollections(tab, page, append) {
+    colState.tab = tab; colState.page = page || 0;
+    var box = document.getElementById('colList');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка…</div>';
+    var d;
+    try {
+      if (tab === 'mine') d = await api.collectionsByProfile(myId(), colState.page);
+      else if (tab === 'fav') d = await api.collectionFavAll(colState.page);
+      else d = await api.collections(colState.page);
+    } catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.content || d.collections)) || [];
+    if (!list.length) { box.innerHTML = '<div class="empty">Коллекций нет.</div>'; return; }
+    var html = list.map(colCard).join('');
+    if (append) { var o = box.querySelector('.col-grid'); if (o) o.insertAdjacentHTML('beforeend', html); }
+    else box.innerHTML = '<div class="col-grid">' + html + '</div>';
+    var mw = document.getElementById('colMore'); if (mw) mw.remove();
+    box.insertAdjacentHTML('beforeend', '<div id="colMore" style="margin-top:12px">' +
+      (list.length >= 20 ? '<button class="btn sm" data-cact="more">Показать ещё</button>' : '') + '</div>');
+    wireCollections();
+  }
+
+  function wireCollections() {
+    var box = document.getElementById('colList');
+    if (!box || box.getAttribute('data-wired') === '1') return;
+    box.setAttribute('data-wired', '1');
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-cact]') : null;
+      if (b && b.getAttribute('data-cact') === 'more') loadCollections(colState.tab, colState.page + 1, true);
+    });
+  }
+
+  async function viewCollections(q) {
+    if (!Auth.isAuth()) return { html: notice(' Коллекции доступны после <a href="index.html?p=login">входа</a>.', 'err') };
+    var tab = q.tab || 'mine';
+    var TABS = [['mine', 'Мои'], ['fav', 'Избранные'], ['all', 'Все']];
+    var tabs = '<div class="ntf-tabs">' + TABS.map(function (t) {
+      return '<button class="ntf-tab' + (t[0] === tab ? ' on' : '') + '" data-ctab="' + t[0] + '">' + t[1] + '</button>';
+    }).join('') + '</div>';
+    var top = '<div class="btn-row" style="margin-bottom:14px"><button class="btn primary" id="colNewApi">➕ Создать коллекцию</button></div>';
+    return {
+      html: '<div class="page-title"> Коллекции</div>' + top + tabs + '<div id="colList"><div class="empty">Загрузка…</div></div>',
+      after: function () {
+        var page = document.getElementById('app');
+        var bar = page ? page.querySelector('.ntf-tabs') : null;
+        if (bar) bar.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('button[data-ctab]') : null;
+          if (!b) return;
+          location.href = 'index.html?p=collections&tab=' + b.getAttribute('data-ctab');
+        });
+        var nb = document.getElementById('colNewApi');
+        if (nb) nb.addEventListener('click', function () {
+          var t = prompt('Название коллекции:'); if (!t) return;
+          api.collectionCreate({ title: t }).then(function () { alert('Коллекция создана'); loadCollections('mine', 0, false); }).catch(function (er) { alert(er.message || er); });
+        });
+        loadCollections(tab, 0, false);
+      }
+    };
+  }
+
+  /* ---- просмотр одной коллекции ---- */
+  async function viewCollection(q) {
+    if (!Auth.isAuth()) return { html: notice(' Войдите для просмотра коллекций. <a href="index.html?p=login">Войти</a>', 'err') };
+    var id = num(q.id, 0);
+    if (!id) return { html: empty('Неверный ID коллекции.') };
+    var d = await api.collection(id);
+    var c = d.collection || d;
+    if (!c || !c.id) return { html: empty('Коллекция не найдена.') };
+    var title = c.title || 'Без названия';
+    var pr = c.profile || {};
+    var mine = num(pr.id, 0) === myId();
+    var h = '<div class="page-title"> ' + esc(title) + '</div>';
+    h += '<div class="page-sub">' + (pr.login ? '@' + esc(pr.login) + ' · ' : '') + num(c.count || c.releases_count, 0) + ' релизов</div>';
+    if (c.description) h += '<div class="desc">' + esc(String(c.description).slice(0, 1500)).replace(/\n/g, '<br>') + '</div>';
+    h += '<div class="btn-row" style="margin:10px 0 16px">';
+    h += '<button class="btn sm" data-cact2="fav">⭐ В избранное</button>';
+    h += '<button class="btn sm" data-cact2="unfav">Убрать из избранного</button>';
+    if (mine) h += '<button class="btn sm" data-cact2="del"> Удалить коллекцию</button>';
+    h += '</div>';
+    h += '<div id="colRel"><div class="empty">Загрузка релизов…</div></div>';
+    h += '<div class="comments" id="colComments" data-id="' + id + '"><div class="page-title"> Комментарии</div><div id="colCmtList"><div class="empty">Загрузка…</div></div></div>';
+    return {
+      html: h,
+      after: function () {
+        var page = document.getElementById('app');
+        var bar = page ? page.querySelector('.btn-row') : null;
+        if (bar) bar.addEventListener('click', function (e) {
+          var b = e.target.closest ? e.target.closest('button[data-cact2]') : null;
+          if (!b) return;
+          var a = b.getAttribute('data-cact2');
+          var pr2 = a === 'fav' ? api.collectionFavAdd(id) : a === 'unfav' ? api.collectionFavDelete(id)
+            : api.collectionDelete(id);
+          pr2.then(function () {
+            if (a === 'del') { alert('Удалено'); location.href = 'index.html?p=collections'; }
+            else alert('Готово');
+          }).catch(function (er) { alert(er.message || er); });
+        });
+        loadCollectionReleases(id, 0, false);
+        loadColComments(id, 0, false);
+      }
+    };
+  }
+
+  async function loadCollectionReleases(id, page, append) {
+    var box = document.getElementById('colRel');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка релизов…</div>';
+    var d;
+    try { d = await api.collectionReleases(id, page || 0); } catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.content || d.releases)) || [];
+    if (!list.length) { box.innerHTML = '<div class="empty">Релизов нет.</div>'; return; }
+    var html = list.map(function (r) { return colRelRow(r); }).join('');
+    if (append) { var o = box.querySelector('.rows'); if (o) o.insertAdjacentHTML('beforeend', html); }
+    else box.innerHTML = '<div class="rows">' + html + '</div>';
+  }
+
+  /* ---- комментарии коллекции ---- */
+  var colCmtState = { id: 0, page: 0, sort: 3 };
+  function ccProfile(c) { var p = (c && c.profile) || {}; return { login: p.login || ('user' + num(p.id,0)), id: num(p.id,0), av: C.imgUrl(p) }; }
+  function ccVote(c) { var v = c && c.vote; if (v && typeof v==='object') return { likes:num(v.likes,0), dislikes:num(v.dislikes,0) }; return { likes:num(c&&c.likes,0), dislikes:num(c&&c.dislikes,0) }; }
+  function ccItem(c, level) {
+    level = level || 0;
+    var id = num(c.id, 0), pr = ccProfile(c), vv = ccVote(c);
+    var msg = c.message || c.text || '';
+    msg = c.is_deleted ? '<i style="color:var(--text-mute)">Комментарий удалён</i>' : esc(msg).replace(/\n/g,'<br>');
+    var mine = myId() && pr.id === myId();
+    var h = '<div class="cmt" data-id="' + id + '" style="margin-left:' + (level*18) + 'px">';
+    h += '<div class="cmt-head">';
+    h += pr.av ? '<img class="cmt-av" src="' + esc(pr.av) + '" alt="" loading="lazy">' : '<div class="cmt-av ph">' + esc(pr.login.slice(0,1).toUpperCase()) + '</div>';
+    h += '<div class="cmt-meta"><b>' + esc(pr.login) + '</b><span class="cmt-date">' + esc(fmtDate(c.timestamp || c.date)) + '</span></div></div>';
+    h += '<div class="cmt-body">' + msg + '</div>';
+    if (!c.is_deleted) {
+      h += '<div class="cmt-actions">';
+      h += '<button class="cmt-act" data-cact3="like" data-id="' + id + '"> ' + vv.likes + '</button>';
+      h += '<button class="cmt-act" data-cact3="dislike" data-id="' + id + '"> ' + vv.dislikes + '</button>';
+      if (mine) h += '<button class="cmt-act" data-cact3="del" data-id="' + id + '">Удалить</button>';
+      h += '</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+  function ccForm(id) {
+    return '<div class="cmt-form"><textarea class="cmt-input" id="ccText" rows="2" placeholder="Написать комментарий…"></textarea>' +
+      '<button class="btn primary sm" data-cact3="send" data-id="' + id + '">Отправить</button></div>';
+  }
+  async function loadColComments(id, page, append) {
+    colCmtState.id = id; colCmtState.page = page || 0;
+    var box = document.getElementById('colCmtList');
+    if (!box) return;
+    if (!append) box.innerHTML = '<div class="empty">Загрузка комментариев…</div>';
+    var d;
+    try { d = await api.collectionCommentAll(id, colCmtState.page, colCmtState.sort); } catch (e) { box.innerHTML = errBox(e); return; }
+    var list = (d && (d.comments || d.content)) || [];
+    var body = list.length ? list.map(function (c) { return ccItem(c, 0); }).join('') : '<div class="empty">Комментариев нет.</div>';
+    if (append) { var o = box.querySelector('.cmt-list'); if (o) o.insertAdjacentHTML('beforeend', list.map(function (c){return ccItem(c,0);}).join('')); }
+    else box.innerHTML = ccForm(id) + '<div class="cmt-list">' + body + '</div>';
+    wireColComments();
+  }
+  function wireColComments() {
+    var box = document.getElementById('colCmtList');
+    if (!box || box.getAttribute('data-wired') === '1') return;
+    box.setAttribute('data-wired', '1');
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-cact3]') : null;
+      if (!b) return;
+      var a = b.getAttribute('data-cact3'), id = num(b.getAttribute('data-id'), 0);
+      if (a === 'send') {
+        var ta = document.getElementById('ccText'); var tx = ta ? ta.value.trim() : ''; if (!tx) return;
+        api.collectionCommentAdd(id, { message: tx }).then(function(){ loadColComments(id,0,false); }).catch(function(er){alert(er.message||er);});
+      } else if (a === 'like') { api.collectionCommentVote(id, 2).then(function(){ loadColComments(colCmtState.id,0,false); }).catch(function(er){alert(er.message||er);}); }
+      else if (a === 'dislike') { api.collectionCommentVote(id, 1).then(function(){ loadColComments(colCmtState.id,0,false); }).catch(function(er){alert(er.message||er);}); }
+      else if (a === 'del') { if (!confirm('Удалить комментарий?')) return; api.collectionCommentDelete(id).then(function(){ loadColComments(colCmtState.id,0,false); }).catch(function(er){alert(er.message||er);}); }
+    });
   }
 
   async function viewRelease(q) {
@@ -597,7 +1189,7 @@
     calendar: viewCalendar, random: viewRandom, release: viewRelease,
     player: viewPlayer, watch: viewWatch, episodes: viewEpisodes,
     login: viewLogin, profile: viewProfile, lists: viewLists,
-    mylists: viewMylists, mylist: viewMylists
+    mylists: viewMylists, mylist: viewMylists, notifs: viewNotifs, friends: viewFriends, collections: viewCollections, collection: viewCollection
   };
 
   async function render() {
