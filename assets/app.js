@@ -62,15 +62,15 @@
     var html = a('index.html', 'Каталог', p === 'home')
       + a('index.html?p=calendar', 'Календарь', p === 'calendar')
       + a('index.html?p=random', 'Случайное', p === 'random')
-      + a('index.html?p=genres', 'Жанры', p === 'genres')
-      + a('index.html?p=settings', 'Настройки', p === 'settings');
+      + a('index.html?p=genres', 'Жанры', p === 'genres');
+    /* Настройки прячем, если сайт сам нашёл свой proxy.php */
+    if (!C.CFG.AUTO_PROXY) html += a('index.html?p=settings', 'Настройки', p === 'settings');
     if (Auth.isAuth()) {
       html += a('index.html?p=lists&list=watching', 'Мои списки', p === 'lists')
         + a('index.html?p=notifs', 'Уведомления', p === 'notifs')
         + a('index.html?p=friends', 'Друзья', p === 'friends')
-        + a('index.html?p=collections', 'Коллекции', p === 'collections')
-        + a('index.html?p=profile', 'Профиль', p === 'profile')
-        + a('index.html?p=mylists', 'Мои подборки', p === 'mylists');
+        + a('index.html?p=collections', 'Мои коллекции', p === 'collections' || p === 'mylists')
+        + a('index.html?p=profile', 'Профиль', p === 'profile');
     }
     var btn = Auth.isAuth()
       ? '<a class="btn sm ghost" href="index.html?p=logout">Выйти</a>'
@@ -694,20 +694,42 @@
     var box = document.getElementById('colList');
     if (!box) return;
     if (!append) box.innerHTML = '<div class="empty">Загрузка…</div>';
-    var d;
+    var d = null;
     try {
       if (tab === 'mine') d = await api.collectionsByProfile(myId(), colState.page);
       else if (tab === 'fav') d = await api.collectionFavAll(colState.page);
       else d = await api.collections(colState.page);
-    } catch (e) { box.innerHTML = errBox(e); return; }
+    } catch (e) {
+      if (tab === 'mine') { d = { content: [] }; }
+      else { box.innerHTML = errBox(e); return; }
+    }
     var list = (d && (d.content || d.collections)) || [];
-    if (!list.length) { box.innerHTML = '<div class="empty">Коллекций нет.</div>'; return; }
-    var html = list.map(colCard).join('');
-    if (append) { var o = box.querySelector('.col-grid'); if (o) o.insertAdjacentHTML('beforeend', html); }
-    else box.innerHTML = '<div class="col-grid">' + html + '</div>';
-    var mw = document.getElementById('colMore'); if (mw) mw.remove();
-    box.insertAdjacentHTML('beforeend', '<div id="colMore" style="margin-top:12px">' +
-      (list.length >= 20 ? '<button class="btn sm" data-cact="more">Показать ещё</button>' : '') + '</div>');
+    if (append) {
+      var g = box.querySelector('.col-grid.srv');
+      if (g) g.insertAdjacentHTML('beforeend', list.map(colCard).join(''));
+      var mw0 = document.getElementById('colMore'); if (mw0) mw0.remove();
+      if (list.length >= 20) box.insertAdjacentHTML('beforeend', '<div id="colMore" style="margin-top:12px"><button class="btn sm" data-cact="more">Показать ещё</button></div>');
+      wireCollections();
+      return;
+    }
+    var out = '';
+    if (tab === 'mine') {
+      var cols = getCols(), names = Object.keys(cols);
+      out += '<div class="col-sec-title"> Мои подборки <span class="badge">локальные</span></div>';
+      if (!names.length) out += '<div class="empty">Локальных подборок нет. Создайте кнопкой «Локальная».</div>';
+      else out += '<div class="rows" id="locRows">' + names.map(function (n) {
+        return '<div class="row"><div class="rinfo"><div class="rtitle">' + esc(n) + '</div>' +
+          '<div class="rsub">' + cols[n].length + ' аниме</div></div>' +
+          '<div class="ractions">' +
+          '<a class="btn sm primary" href="index.html?p=mylists&name=' + encodeURIComponent(n) + '">Открыть</a>' +
+          '<button class="btn sm" data-drop="' + esc(n) + '">Удалить</button></div></div>';
+      }).join('') + '</div>';
+      out += '<div class="col-sec-title"> Коллекции Anixart</div>';
+    }
+    if (!list.length) out += '<div class="empty">' + (tab === 'mine' ? 'На сервере коллекций нет.' : 'Коллекций нет.') + '</div>';
+    else out += '<div class="col-grid srv">' + list.map(colCard).join('') + '</div>';
+    box.innerHTML = out;
+    if (list.length >= 20) box.insertAdjacentHTML('beforeend', '<div id="colMore" style="margin-top:12px"><button class="btn sm" data-cact="more">Показать ещё</button></div>');
     wireCollections();
   }
 
@@ -717,7 +739,15 @@
     box.setAttribute('data-wired', '1');
     box.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('button[data-cact]') : null;
-      if (b && b.getAttribute('data-cact') === 'more') loadCollections(colState.tab, colState.page + 1, true);
+      if (b && b.getAttribute('data-cact') === 'more') { loadCollections(colState.tab, colState.page + 1, true); return; }
+      var dr = e.target.closest ? e.target.closest('[data-drop]') : null;
+      if (dr) {
+        var n = dr.getAttribute('data-drop');
+        if (confirm('Удалить локальную подборку «' + n + '»?')) { colDrop(n); loadCollections('mine', 0, false); }
+        return;
+      }
+      var op = e.target.closest ? e.target.closest('[data-open]') : null;
+      if (op) { location.href = 'index.html?p=mylists&name=' + encodeURIComponent(op.getAttribute('data-open')); return; }
     });
   }
 
@@ -728,9 +758,12 @@
     var tabs = '<div class="ntf-tabs">' + TABS.map(function (t) {
       return '<button class="ntf-tab' + (t[0] === tab ? ' on' : '') + '" data-ctab="' + t[0] + '">' + t[1] + '</button>';
     }).join('') + '</div>';
-    var top = '<div class="btn-row" style="margin-bottom:14px"><button class="btn primary" id="colNewApi">➕ Создать коллекцию</button></div>';
+    var top = '<div class="btn-row" style="margin-bottom:14px">' +
+      '<button class="btn primary" id="colNewLocal">➕ Локальная</button>' +
+      '</div>';
+    var ptitle = (tab === 'mine' ? 'Мои коллекции' : 'Коллекции');
     return {
-      html: '<div class="page-title"> Коллекции</div>' + top + tabs + '<div id="colList"><div class="empty">Загрузка…</div></div>',
+      html: '<div class="page-title"> ' + ptitle + '</div>' + top + tabs + '<div id="colList"><div class="empty">Загрузка…</div></div>',
       after: function () {
         var page = document.getElementById('app');
         var bar = page ? page.querySelector('.ntf-tabs') : null;
@@ -739,11 +772,10 @@
           if (!b) return;
           location.href = 'index.html?p=collections&tab=' + b.getAttribute('data-ctab');
         });
-        var nb = document.getElementById('colNewApi');
-        if (nb) nb.addEventListener('click', function () {
-          var t = prompt('Название коллекции:'); if (!t) return;
-          var dsc = prompt('Описание коллекции (можно пропустить):') || '';
-          api.collectionCreate({ title: t, description: dsc || t, releases: [], is_private: false }).then(function (r) { var cd = (r && r.code); if (cd === 0 || cd === undefined) { alert('Коллекция создана'); loadCollections('mine', 0, false); } else { alert('Не создано (code ' + cd + ') → ' + JSON.stringify(r).slice(0,200)); } }).catch(function (er) { alert(er.message || er); });
+        var nl = document.getElementById('colNewLocal');
+        if (nl) nl.addEventListener('click', function () {
+          var n = prompt('Название локальной коллекции:'); if (!n) return;
+          colCreate(n); loadCollections('mine', 0, false);
         });
         loadCollections(tab, 0, false);
       }
@@ -1395,7 +1427,8 @@
     document.title = 'AnixWeb — Anixart';
   }
 
-  function boot() {
+  async function boot() {
+    if (C.detectProxy) { try { await C.detectProxy(); } catch (e) {} }
     renderNav();
     wireBurger();
     C.refreshStatic();

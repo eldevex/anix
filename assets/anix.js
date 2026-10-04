@@ -12,7 +12,8 @@
     STATIC_FALLBACK: 'https://s.anixmirai.com',
     IFRAME: 'https://anixmirai.com/iframe?url=',
     UA: 'AnixartApp/9.0 BETA (Android 13; SDK 33)',
-    PROXY: 'https://anixart.alwaysdata.net/proxy.php'
+    PROXY: '',
+    AUTO_PROXY: ''
   };
 
   var WEEK = [['monday', 'Понедельник'], ['tuesday', 'Вторник'], ['wednesday', 'Среда'],
@@ -41,9 +42,39 @@
   };
 
   /* --------------------------- прокси ---------------------------- */
-  /* Прокси нужен ТОЛЬКО для создания комментариев: API проверяет User-Agent,
-     который браузер подставить не может. Путь задаётся в Настройках. */
-  function getProxy() { var u = String(stGet('anix_proxy', '') || '').trim(); return u || String(CFG.PROXY || '').trim(); }
+  /* Прокси нужен ТОЛЬКО для write-операций Anixart (комментарии, коллекции):
+     API проверяет User-Agent, который браузер подставить не может.
+     Если сайт лежит рядом с proxy.php (alwaysdata) — подключаем его сами.
+     Иначе (github.io) URL задаётся вручную в Настройках. */
+  var autoProxy = '';
+
+  /* Пробуем найти proxy.php рядом с текущей страницей.
+     Наш proxy.php на пустой GET отвечает 400 + JSON {"error":"bad request"} —
+     это и есть признак «файл существует и это наш прокси». */
+  async function detectProxy() {
+    if (autoProxy) return autoProxy;
+    if (!/^https?:$/.test((location.protocol || '').replace(':','')+':')) { CFG.AUTO_PROXY = ''; return ''; }
+    if (!location.origin || location.origin === 'null') { CFG.AUTO_PROXY = ''; return ''; }
+    try {
+      var dir = location.pathname.replace(/[^/]*$/, '');
+      var url = location.origin + dir + 'proxy.php';
+      var r = await fetch(url, { method: 'GET', cache: 'no-store', credentials: 'omit' });
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (ct.indexOf('json') !== -1) {
+        var j = null;
+        try { j = await r.json(); } catch (e) { j = null; }
+        if (j && (j.error === 'bad request' || j.error === 'bad method')) autoProxy = url;
+      }
+    } catch (e) { autoProxy = ''; }
+    CFG.AUTO_PROXY = autoProxy;
+    return autoProxy;
+  }
+
+  function getProxy() {
+    if (autoProxy) return autoProxy;
+    var u = String(stGet('anix_proxy', '') || '').trim();
+    return u || String(CFG.PROXY || '').trim();
+  }
   function setProxy(u) {
     u = String(u == null ? '' : u).trim();
     if (u) stSet('anix_proxy', u); else stDel('anix_proxy');
@@ -406,5 +437,5 @@
   function empty(msg) { return '<div class="empty">' + msg + '</div>'; }
   function loginLink() { return ' <a href="index.html?p=login">Войти</a>'; }
 
-  window.AnixCore = { CFG: CFG, api: api, Auth: Auth, esc: esc, imgUrl: imgUrl, cleanEmbed: cleanEmbed, staticBase: staticBase, refreshStatic: refreshStatic, params: params, getProxy: getProxy, setProxy: setProxy, needProxy: NEED_PROXY };
+  window.AnixCore = { CFG: CFG, api: api, Auth: Auth, esc: esc, imgUrl: imgUrl, cleanEmbed: cleanEmbed, staticBase: staticBase, refreshStatic: refreshStatic, params: params, getProxy: getProxy, setProxy: setProxy, needProxy: NEED_PROXY, detectProxy: detectProxy };
 })();
