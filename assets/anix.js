@@ -1,6 +1,7 @@
 /* ==========================================================================
-   AnixWeb — клиент. Все запросы к API Anixart идут напрямую из браузера
-   (никакого серверного прокси). Токен хранится только в localStorage.
+   AnixWeb — клиент. Запросы идут напрямую из браузера к API Anixart;
+   через серверный прокси идёт ТОЛЬКО создание комментариев (там нужен User-Agent,
+   который браузер подставить не может). Токен хранится только в localStorage.
    ========================================================================== */
 (function () {
   'use strict';
@@ -10,7 +11,8 @@
     VERSION_CODE: '25082901',
     STATIC_FALLBACK: 'https://s.anixmirai.com',
     IFRAME: 'https://anixmirai.com/iframe?url=',
-    UA: 'AnixartApp/9.0 BETA (Android 13; SDK 33)'
+    UA: 'AnixartApp/9.0 BETA (Android 13; SDK 33)',
+    PROXY: ''   /* задаётся пользователем в Настройках (getProxy) */
   };
 
   var WEEK = [['monday', 'Понедельник'], ['tuesday', 'Вторник'], ['wednesday', 'Среда'],
@@ -38,6 +40,16 @@
     clear: function () { stDel('anix_token'); stDel('anix_profile'); }
   };
 
+  /* --------------------------- прокси ---------------------------- */
+  /* Прокси нужен ТОЛЬКО для создания комментариев: API проверяет User-Agent,
+     который браузер подставить не может. Путь задаётся в Настройках. */
+  function getProxy() { var u = String(stGet('anix_proxy', '') || '').trim(); return u || String(CFG.PROXY || '').trim(); }
+  function setProxy(u) {
+    u = String(u == null ? '' : u).trim();
+    if (u) stSet('anix_proxy', u); else stDel('anix_proxy');
+    return getProxy();
+  }
+
   /* --------------------------- ошибки ---------------------------- */
   function AuthError(msg) { this.name = 'AuthError'; this.message = msg; }
   AuthError.prototype = Object.create(Error.prototype);
@@ -52,27 +64,62 @@
         q.push(encodeURIComponent(k) + '=' + encodeURIComponent(query[k]));
       }
     }
-    return CFG.BASE + path + (q.length ? '?' + q.join('&') : '');
+    return path + (q.length ? '?' + q.join('&') : '');
+  }
+
+  /* Только эти пути требуют прокси (создание комментариев: API проверяет User-Agent,
+     который браузер подставить не может). Всё остальное — напрямую. */
+  function NEED_PROXY(path) {
+    return /^\/release\/comment\/add\//.test(path)
+        || /^\/collection\/comment\/add\//.test(path)
+        || /^\/article\/comment\/add\//.test(path);
   }
 
   async function req(method, path, opt) {
     opt = opt || {};
-    var init = {
-      method: method, mode: 'cors', credentials: 'omit', cache: 'no-store',
-      headers: { 'Accept': 'application/json', 'User-Agent': CFG.UA }
-    };
-    if (opt.body !== undefined) {
-      init.headers['Content-Type'] = 'application/json';
-      init.body = JSON.stringify(opt.body);
-      if (opt.apiV2) init.headers['Api-Version'] = 'v2';
-    }
+    var fullPath = buildUrl(path, opt.query);
+    var proxy = getProxy();
+    var needP = NEED_PROXY(path);
+    if (needP && !proxy) throw new Error('Комментирование недоступно: не настроен прокси-сервер. Укажите его в Настройках.');
+    var viaProxy = needP && !!proxy;
     var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = null;
-    if (ctrl) { init.signal = ctrl.signal; timer = setTimeout(function () { ctrl.abort(); }, opt.ms || 25000); }
+    if (ctrl) { timer = setTimeout(function () { ctrl.abort(); }, opt.ms || 25000); }
 
     var res, txt;
     try {
-      res = await fetch(buildUrl(path, opt.query), init);
+      if (viaProxy) {
+        var payload = { method: method, path: fullPath };
+        if (opt.form !== undefined) payload.form = opt.form;
+        else if (opt.body !== undefined) payload.body = opt.body;
+        if (opt.apiV2) payload.apiV2 = true;
+        var popt = {
+          method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        };
+        if (ctrl) popt.signal = ctrl.signal;
+        res = await fetch(proxy, popt);
+      } else {
+        var init = {
+          method: method, mode: 'cors', credentials: 'omit', cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        };
+        if (opt.form !== undefined) {
+          init.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+          var fp = [];
+          for (var fk in opt.form) {
+            if (opt.form[fk] === undefined || opt.form[fk] === null) continue;
+            fp.push(encodeURIComponent(fk) + '=' + encodeURIComponent(opt.form[fk]));
+          }
+          init.body = fp.join('&');
+        } else if (opt.body !== undefined) {
+          init.headers['Content-Type'] = 'application/json';
+          init.body = JSON.stringify(opt.body);
+          if (opt.apiV2) init.headers['Api-Version'] = 'v2';
+        }
+        if (ctrl) init.signal = ctrl.signal;
+        res = await fetch(CFG.BASE + fullPath, init);
+      }
       txt = await res.text();
     } catch (e) {
       if (e && e.name === 'AbortError') throw new Error('Anixart не ответил за ' + Math.round((opt.ms || 25000) / 1000) + ' с');
@@ -101,9 +148,9 @@
     urls: function () { return req('GET', '/config/urls', { query: { is_beta: 'true' } }); },
 
     /* ===================== auth ===================== */
-    signIn: function (login, password) { return req('POST', '/auth/signIn', { query: { login: login, password: password } }); },
-    signUp: function (body) { return req('POST', '/auth/signUp', { body: body }); },
-    verify: function (body) { return req('POST', '/auth/verify', { body: body }); },
+    signIn: function (login, password) { return req('POST', '/auth/signIn', { form: { login: login, password: password } }); },
+    signUp: function (email, login, password) { return req('POST', '/auth/signUp', { form: { email: email, login: login, password: password } }); },
+    verify: function (email, login, password, hash, code) { return req('POST', '/auth/verify', { form: { email: email, login: login, password: password, hash: hash, code: code } }); },
     restore: function (body) { return req('POST', '/auth/restore', { body: body }); },
     restoreVerify: function (body) { return req('POST', '/auth/restore/verify', { body: body }); },
 
@@ -161,7 +208,7 @@
     profileInfo: function () { return req('GET', '/profile/info'); },
     userList: function (id, list, page) { return req('GET', '/profile/list/all/' + id + '/' + list + '/' + (page || 0), { query: { sort: 1, filter_announce: 0 } }); },
     history: function (page) { return req('GET', '/history/' + (page || 0)); },
-    friendRecommendations: function () { return req('GET', '/profile/friend/recomendations'); },
+    friendRecommendations: function () { return req('GET', '/profile/friend/recommendations'); },
     friends: function (id, page) { return req('GET', '/profile/friend/all/' + id + '/' + (page || 0)); },
     friendRequestsLast: function (type) { return req('GET', '/profile/friend/requests/' + type + '/last'); },
     friendRequests: function (type, page) { return req('GET', '/profile/friend/requests/' + type + '/' + (page || 0)); },
@@ -352,5 +399,5 @@
   function empty(msg) { return '<div class="empty">' + msg + '</div>'; }
   function loginLink() { return ' <a href="index.html?p=login">Войти</a>'; }
 
-  window.AnixCore = { CFG: CFG, api: api, Auth: Auth, esc: esc, imgUrl: imgUrl, cleanEmbed: cleanEmbed, staticBase: staticBase, refreshStatic: refreshStatic, params: params };
+  window.AnixCore = { CFG: CFG, api: api, Auth: Auth, esc: esc, imgUrl: imgUrl, cleanEmbed: cleanEmbed, staticBase: staticBase, refreshStatic: refreshStatic, params: params, getProxy: getProxy, setProxy: setProxy, needProxy: NEED_PROXY };
 })();

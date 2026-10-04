@@ -28,6 +28,10 @@
     "Работа","Самураи","Сёдзё-ай","Сёнен-ай","Сэйнэн","Дзёсей"];
   var ERR_CODES = { 0: 'Успех', 1: 'Неизвестная ошибка', 2: 'Неверный логин', 3: 'Неверный пароль',
                     401: 'Не авторизован', 402: 'Бан', 403: 'Перманентный бан' };
+  var REG_ERR = { 2: 'Недопустимый логин', 3: 'Недопустимый email', 4: 'Недопустимый пароль',
+                  5: 'Логин уже занят', 6: 'Email уже занят', 7: 'Код уже отправлен',
+                  8: 'Не удалось отправить код', 9: 'Email-сервис запрещён', 10: 'Слишком много регистраций',
+                  11: 'Неверный код' };
 
   /* ------------------------- мелкие утилиты ------------------------- */
   function stGet(k, def) { try { var v = localStorage.getItem(k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } }
@@ -58,7 +62,8 @@
     var html = a('index.html', 'Каталог', p === 'home')
       + a('index.html?p=calendar', 'Календарь', p === 'calendar')
       + a('index.html?p=random', 'Случайное', p === 'random')
-      + a('index.html?p=genres', 'Жанры', p === 'genres');
+      + a('index.html?p=genres', 'Жанры', p === 'genres')
+      + a('index.html?p=settings', 'Настройки', p === 'settings');
     if (Auth.isAuth()) {
       html += a('index.html?p=lists&list=watching', 'Мои списки', p === 'lists')
         + a('index.html?p=notifs', 'Уведомления', p === 'notifs')
@@ -280,7 +285,7 @@
     var h = '<div class="cmt" data-id="' + id + '" style="margin-left:' + (level * 18) + 'px">';
     h += '<div class="cmt-head">';
     h += pr.av ? '<img class="cmt-av" src="' + esc(pr.av) + '" alt="" loading="lazy">' : '<div class="cmt-av ph">' + esc(pr.login.slice(0, 1).toUpperCase()) + '</div>';
-    h += '<div class="cmt-meta"><b>' + esc(pr.login) + '</b>';
+    h += '<div class="cmt-meta"><a class="cmt-login" href="index.html?p=profile&id=' + pr.id + '"><b>' + esc(pr.login) + '</b></a>';
     if (c.is_edited) h += ' <span class="cmt-tag">изм.</span>';
     h += '<span class="cmt-date">' + esc(fmtDate(c.timestamp || c.date)) + '</span></div></div>';
     h += '<div class="cmt-body">' + msg + '</div>';
@@ -326,8 +331,14 @@
     var toolbar = '<div class="cmt-toolbar"><div class="cmt-sorts">' +
       CMT_SORT.map(function (s) { return '<button class="cmt-sort' + (cmtState.sort === s[0] ? ' on' : '') + '" data-sort="' + s[0] + '">' + s[1] + '</button>'; }).join('') +
       '</div><button class="btn sm" data-act="refresh"></button></div>';
-    var form = Auth.isAuth() ? commentForm(id, 0, 'Написать комментарий…')
-      : notice('Чтобы писать комментарии, <a href="index.html?p=login">войдите</a>.', '');
+    var form;
+    if (!Auth.isAuth()) {
+      form = notice('Чтобы писать комментарии, <a href="index.html?p=login">войдите</a>.', '');
+    } else if (!C.getProxy()) {
+      form = notice('Чтобы писать комментарии, укажите прокси-сервер в <a href="index.html?p=settings">Настройках</a>.', '');
+    } else {
+      form = commentForm(id, 0, 'Написать комментарий…');
+    }
     var body = list.length ? list.map(function (c) { return commentItem(c, 0); }).join('')
       : '<div class="empty">Комментариев пока нет.</div>';
 
@@ -615,7 +626,7 @@
       return '<button class="ntf-tab' + (t[0] === tab ? ' on' : '') + '" data-ftab="' + t[0] + '">' + t[1] + '</button>';
     }).join('') + '</div>';
     return {
-      html: '<div class="page-title"> Друзья</div>' + tabs + '<div id="frList"><div class="empty">Загрузка…</div></div>',
+      html: '<div class="page-title"> Друзья</div>' + '<div class="searchbar fr-search"><input type="text" id="frFind" placeholder="Добавить друга по логину…"><button type="button" id="frFindBtn">Найти</button></div>' + '<div id="frFindRes"></div>' + tabs + '<div id="frList"><div class="empty">Загрузка…</div></div>',
       after: function () {
         var page = document.getElementById('app');
         var bar = page ? page.querySelector('.ntf-tabs') : null;
@@ -625,8 +636,28 @@
           location.href = 'index.html?p=friends&tab=' + b.getAttribute('data-ftab');
         });
         loadFriends(tab, 0, false);
+        wireFriendSearch();
       }
     };
+  }
+
+  function wireFriendSearch() {
+    var inp = document.getElementById('frFind');
+    var btn = document.getElementById('frFindBtn');
+    var res = document.getElementById('frFindRes');
+    if (!inp || !btn || !res) return;
+    function go() {
+      var q = (inp.value || '').trim();
+      if (q.length < 2) { res.innerHTML = notice('Введите хотя бы 2 символа.', 'err'); return; }
+      res.innerHTML = '<div class="empty">Поиск…</div>';
+      api.searchProfiles(q, 0).then(function (d) {
+        var list = (d && (d.content || d.profiles)) || [];
+        if (!list.length) { res.innerHTML = '<div class="empty">Никого не найдено.</div>'; return; }
+        res.innerHTML = '<div class="fr-list">' + list.map(function (p) { return profCard(p); }).join('') + '</div>';
+      }).catch(function (e) { res.innerHTML = errBox(e); });
+    }
+    btn.addEventListener('click', go);
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   }
 
   /* ---------------------- коллекции Anixart (API) ----------------- */
@@ -787,7 +818,7 @@
     var h = '<div class="cmt" data-id="' + id + '" style="margin-left:' + (level*18) + 'px">';
     h += '<div class="cmt-head">';
     h += pr.av ? '<img class="cmt-av" src="' + esc(pr.av) + '" alt="" loading="lazy">' : '<div class="cmt-av ph">' + esc(pr.login.slice(0,1).toUpperCase()) + '</div>';
-    h += '<div class="cmt-meta"><b>' + esc(pr.login) + '</b><span class="cmt-date">' + esc(fmtDate(c.timestamp || c.date)) + '</span></div></div>';
+    h += '<div class="cmt-meta"><a class="cmt-login" href="index.html?p=profile&id=' + pr.id + '"><b>' + esc(pr.login) + '</b></a><span class="cmt-date">' + esc(fmtDate(c.timestamp || c.date)) + '</span></div></div>';
     h += '<div class="cmt-body">' + msg + '</div>';
     if (!c.is_deleted) {
       h += '<div class="cmt-actions">';
@@ -956,7 +987,7 @@
       html: '<div class="authbox"><h2>🔑 Вход в Anixart</h2><form id="loginForm">' +
         '<div class="field"><label>Логин или Email</label><input name="login" id="lgLogin" autocomplete="username" required></div>' +
         '<div class="field"><label>Пароль</label><input type="password" name="password" id="lgPass" autocomplete="current-password" required></div>' +
-        '<button class="btn primary" type="submit" id="lgBtn">Войти</button></form><div id="lgMsg"></div></div>' +
+        '<button class="btn primary" type="submit" id="lgBtn">Войти</button></form><div id="lgMsg"></div><div class="auth-alt">Нет аккаунта? <a href="index.html?p=register">Зарегистрироваться</a></div></div>' +
         notice('Запрос уходит напрямую из браузера к API Anixart. Токен сохраняется только в этом браузере.'),
       after: function () {
         var f = document.getElementById('loginForm');
@@ -980,6 +1011,108 @@
             msg.innerHTML = notice('Ошибка входа: ' + esc(err.message), 'err');
             btn.disabled = false; btn.textContent = 'Войти';
           }
+        });
+      }
+    };
+  }
+
+  function viewSettings() {
+    var cur = C.getProxy();
+    return {
+      html: '<div class="authbox"><h2>⚙️ Настройки</h2>' +
+        '<div class="field"><label>Прокси-сервер для комментариев (URL скрипта)</label>' +
+        '<input type="url" id="stProxy" placeholder="https://ваш-сервер/proxy.php" value="' + esc(cur) + '"></div>' +
+        '<div class="btn-row"><button class="btn primary" id="stSave">Сохранить</button>' +
+        '<button class="btn sm" id="stClear">Очистить</button></div>' +
+        '<div id="stMsg"></div></div>' +
+        notice('Прокси нужен только для <b>отправки</b> комментариев (API требует заголовок User-Agent, который браузер подставить не может). Без прокси можно читать комментарии, голосовать, добавлять в друзья.') +
+        notice('Скрипт-пример прокси — в файле <b>proxy.php</b> на GitHub-репозитории.'),
+      after: function () {
+        var inp = document.getElementById('stProxy');
+        var msg = document.getElementById('stMsg');
+        var save = document.getElementById('stSave');
+        var clr = document.getElementById('stClear');
+        if (save) save.addEventListener('click', function () {
+          C.setProxy(inp.value);
+          msg.innerHTML = notice('Сохранено.', 'ok');
+        });
+        if (clr) clr.addEventListener('click', function () {
+          inp.value = ''; C.setProxy('');
+          msg.innerHTML = notice('Прокси очищен. Комментирование отключено.', 'ok');
+        });
+      }
+    };
+  }
+
+  function viewRegister() {
+    if (Auth.isAuth()) return { html: notice('Вы уже вошли как <b>' + esc((Auth.profile() || {}).login || '') + '</b>. <a href="index.html?p=profile">Профиль</a>') };
+    var H = '<div class="authbox"><h2> Регистрация в Anixart</h2>' +
+      '<div id="regStep1"><form id="regForm1">' +
+      '<div class="field"><label>Email</label><input type="email" id="rgEmail" autocomplete="email" required></div>' +
+      '<div class="field"><label>Логин</label><input type="text" id="rgLogin" autocomplete="username" required></div>' +
+      '<div class="field"><label>Пароль</label><input type="password" id="rgPass" autocomplete="new-password" required></div>' +
+      '<div class="field"><label>Повтор пароля</label><input type="password" id="rgPass2" autocomplete="new-password" required></div>' +
+      '<button class="btn primary" type="submit" id="rgBtn1">Получить код</button></form>' +
+      '<div id="rgMsg1"></div></div>' +
+      '<div id="regStep2" style="display:none"><div class="notice">Код отправлен на <b id="rgEmailShow"></b>. Введите его ниже.</div>' +
+      '<form id="regForm2"><div class="field"><label>Код из письма</label><input type="text" id="rgCode" inputmode="numeric" maxlength="6" placeholder="0000" required></div>' +
+      '<button class="btn primary" type="submit" id="rgBtn2">Подтвердить</button> ' +
+      '<button class="btn sm" type="button" id="rgBack">Назад</button></form>' +
+      '<div id="rgMsg2"></div></div>' +
+      '<div class="auth-alt">Уже есть аккаунт? <a href="index.html?p=login">Войти</a></div></div>' +
+      notice('Код приходит на указанную почту. Запрос уходит напрямую к API Anixart.');
+    return {
+      html: H,
+      after: function () {
+        var email = '', login = '', pass = '', hash = '';
+        var f1 = document.getElementById('regForm1');
+        var f2 = document.getElementById('regForm2');
+        if (f1) f1.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          email = document.getElementById('rgEmail').value.trim();
+          login = document.getElementById('rgLogin').value.trim();
+          pass = document.getElementById('rgPass').value;
+          var pass2 = document.getElementById('rgPass2').value;
+          var msg = document.getElementById('rgMsg1'), btn = document.getElementById('rgBtn1');
+          if (!email || !login || !pass) { msg.innerHTML = notice('Заполните все поля.', 'err'); return; }
+          if (pass !== pass2) { msg.innerHTML = notice('Пароли не совпадают.', 'err'); return; }
+          btn.disabled = true; btn.textContent = 'Отправляем…';
+          try {
+            var res = await api.signUp(email, login, pass);
+            var rc = num(res && res.code, -1);
+            if (rc !== 0) throw new Error(REG_ERR[rc] || ERR_CODES[rc] || ('Код ' + rc));
+            hash = res.hash || '';
+            document.getElementById('rgEmailShow').textContent = email;
+            document.getElementById('regStep1').style.display = 'none';
+            document.getElementById('regStep2').style.display = '';
+          } catch (err) {
+            msg.innerHTML = notice('Ошибка: ' + esc(err.message), 'err');
+            btn.disabled = false; btn.textContent = 'Получить код';
+          }
+        });
+        if (f2) f2.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var code = document.getElementById('rgCode').value.trim();
+          var msg = document.getElementById('rgMsg2'), btn = document.getElementById('rgBtn2');
+          if (!code) { msg.innerHTML = notice('Введите код.', 'err'); return; }
+          btn.disabled = true; btn.textContent = 'Проверяем…';
+          try {
+            var res = await api.verify(email, login, pass, hash, code);
+            var rc = num(res && res.code, -1);
+            if (rc !== 0) throw new Error(REG_ERR[rc] || ERR_CODES[rc] || ('Код ' + rc));
+            var tok = res.profileToken && res.profileToken.token;
+            if (!tok) throw new Error('Не удалось получить токен.');
+            Auth.set(tok, res.profile || null);
+            location.href = 'index.html?p=profile';
+          } catch (err) {
+            msg.innerHTML = notice('Ошибка: ' + esc(err.message), 'err');
+            btn.disabled = false; btn.textContent = 'Подтвердить';
+          }
+        });
+        var back = document.getElementById('rgBack');
+        if (back) back.addEventListener('click', function () {
+          document.getElementById('regStep2').style.display = 'none';
+          document.getElementById('regStep1').style.display = '';
         });
       }
     };
@@ -1030,6 +1163,20 @@
     if (p.register_date) h += '📆 Регистрация: <b>' + new Date(p.register_date * 1000).toLocaleDateString('ru-RU') + '</b><br>';
     if (p.last_activity_time) h += '🕐 Активность: <b>' + new Date(p.last_activity_time * 1000).toLocaleString('ru-RU') + '</b><br>';
     if (soc.length) h += '<div style="margin-top:10px">🔗 ' + soc.join(' | ') + '</div>';
+    var _pid = num(p.id, 0), _my = myId();
+    if (Auth.isAuth() && _pid && _pid !== _my) {
+      var _fs = (p.friend_status === 2) ? 2 : 0;
+      h += '<div id="frActMsg"></div>';
+      h += '<div class="btn-row" id="frAct">';
+      if (_fs === 2) {
+        h += '<button class="btn sm primary" data-fr="remove">Удалить из друзей</button>';
+      } else {
+        h += '<button class="btn sm primary" data-fr="send">В друзья</button>';
+        h += '<button class="btn sm" data-fr="remove">Отменить заявку</button>';
+      }
+      h += '<button class="btn sm" data-fr="block">Блок</button>';
+      h += '</div>';
+    }
     h += '<div class="divider"></div>' +
       '<div class="btn-row"><a class="btn" href="index.html?p=lists&list=watching">📺 Смотрю</a>' +
       '<a class="btn" href="index.html?p=lists&list=completed">✅ Просмотрено</a>' +
@@ -1067,7 +1214,43 @@
     if (!pid) return { html: empty('Не удалось определить ID профиля.') };
     var d = await api.profile(pid);
     if (!d.profile) return { html: empty('Профиль не найден.') };
-    return profileView(d.profile);
+    var out = profileView(d.profile);
+    var _tp = num(d.profile.id, 0);
+    out.after = function () { if (Auth.isAuth() && _tp && _tp !== myId()) wireFriendActions(_tp); };
+    return out;
+  }
+
+  function wireFriendActions(pid) {
+    var box = document.getElementById('frAct');
+    if (!box) return;
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-fr]') : null;
+      if (!b) return;
+      var act = b.getAttribute('data-fr');
+      var msg = document.getElementById('frActMsg');
+      var btns = box.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+      var fn = act === 'send' ? api.friendRequestSend(pid) : act === 'remove' ? api.friendRequestRemove(pid) : api.blockAdd(pid);
+      Promise.resolve(fn).then(function (r) {
+        if (msg) msg.innerHTML = frMsg(r && r.code);
+        setTimeout(function () { location.reload(); }, 900);
+      }).catch(function (err) {
+        if (msg) msg.innerHTML = notice('Ошибка: ' + esc(err.message), 'err');
+        for (var j = 0; j < btns.length; j++) btns[j].disabled = false;
+      });
+    });
+  }
+
+  function frMsg(code) {
+    var c = (code === undefined || code === null) ? 0 : code;
+    if (c === 0) return notice('Готово.', 'ok');
+    if (c === 2) return notice('Заявка подтверждена — теперь вы друзья.', 'ok');
+    if (c === 3) return notice('Заявка уже отправлена.', 'ok');
+    if (c === 4) return notice('Профиль заблокирован.', 'err');
+    if (c === 5) return notice('Вы заблокированы этим пользователем.', 'err');
+    if (c === 6) return notice('Достигнут лимит друзей.', 'err');
+    if (c === 402) return notice('Действие запрещено (402).', 'err');
+    return notice('Код ответа: ' + c, 'err');
   }
 
   async function viewLists(q) {
@@ -1189,7 +1372,7 @@
     home: viewHome, genres: viewGenres, filter: viewFilter, search: viewSearch,
     calendar: viewCalendar, random: viewRandom, release: viewRelease,
     player: viewPlayer, watch: viewWatch, episodes: viewEpisodes,
-    login: viewLogin, profile: viewProfile, lists: viewLists,
+    login: viewLogin, register: viewRegister, settings: viewSettings, profile: viewProfile, lists: viewLists,
     mylists: viewMylists, mylist: viewMylists, notifs: viewNotifs, friends: viewFriends, collections: viewCollections, collection: viewCollection
   };
 

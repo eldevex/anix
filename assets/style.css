@@ -451,3 +451,17 @@ button { cursor: pointer; }
 .searchbar button {
   background: transparent; border: none; color: var(--text); cursor: pointer; font-size: 17px;
 }
+
+/* clickable comment login */
+.cmt-login{color:inherit;text-decoration:none}
+.cmt-login:hover b,.cmt-login b{color:var(--accent,#ff6a00)}
+.cmt-login b{font-weight:600}
+
+/* friend search block */
+.fr-search{margin:10px 0}
+
+/* auth alt link + register step */
+.auth-alt{margin-top:14px;font-size:14px;color:var(--text-mute,#888)}
+.auth-alt a{color:var(--accent,#ff6a00);text-decoration:none}
+.auth-alt a:hover{text-decoration:underline}
+#regStep2 .notice{margin-bottom:10px}
