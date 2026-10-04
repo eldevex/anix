@@ -1,0 +1,6294 @@
+openapi: 3.1.0
+info:
+  title: Anixart API
+  description: 'This is an unofficial OpenAPI specification of [Anixart](https://anixart-app.com)
+    API
+
+
+    Based on Anixart 9.0 beta 9
+
+
+    Some of type definitions and endpoints are taken and converted from [AnixartJS](https://github.com/theDesConnet/AnixartJS)
+    library
+
+
+    Made by [@Radiquum](https://wah.su/radiquum) at [@Anix-Org](https://github.com/AniX-org)
+
+    '
+  version: 9.0 beta 9
+paths:
+  /config/toggles:
+    get:
+      tags:
+      - Config
+      summary: Get toggles
+      description: Get dynamic app configuration toggles
+      operationId: configToggles
+      parameters:
+      - name: version_code
+        in: query
+        description: app version code
+        required: true
+        schema:
+          type: integer
+          example: 1
+      - name: is_beta
+        in: query
+        description: is beta version
+        required: true
+        schema:
+          type: boolean
+          example: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IConfigTogglesResponse'
+      security:
+      - token: []
+  /config/urls:
+    get:
+      tags:
+      - Config
+      summary: Get urls
+      description: 'Get alternative api urls
+
+
+        Also they are taken from GitHub [urls.json](https://raw.githubusercontent.com/AnixHelper/pages/refs/heads/main/urls.json)
+
+        '
+      operationId: configUrls
+      parameters:
+      - name: version_code
+        in: query
+        description: app version code
+        required: true
+        schema:
+          type: integer
+          example: 1
+      - name: is_beta
+        in: query
+        description: is beta version
+        required: true
+        schema:
+          type: boolean
+          example: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IConfigUrlsResponse'
+      security:
+      - token: []
+  /auth/signIn:
+    post:
+      tags:
+      - Auth
+      summary: Sign in
+      description: Sign in to account and get a token
+      operationId: authSignIn
+      parameters:
+      - $ref: '#/components/parameters/IParameterLogin'
+      - $ref: '#/components/parameters/IParameterPassword'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ILoginResponse'
+  /auth/signUp:
+    post:
+      tags:
+      - Auth
+      summary: Sign up
+      description: Sign up new account and get a verify code
+      operationId: authSignUp
+      parameters:
+      - $ref: '#/components/parameters/IParameterEmail'
+      - $ref: '#/components/parameters/IParameterLogin'
+      - $ref: '#/components/parameters/IParameterPassword'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IRegisterResponse'
+  /auth/verify:
+    post:
+      tags:
+      - Auth
+      summary: Verify sign up
+      description: verify sign up of an account and get a token
+      operationId: authVerify
+      parameters:
+      - $ref: '#/components/parameters/IParameterEmail'
+      - $ref: '#/components/parameters/IParameterLogin'
+      - $ref: '#/components/parameters/IParameterPassword'
+      - $ref: '#/components/parameters/IParameterHash'
+      - $ref: '#/components/parameters/IParameterCode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IRegisterVerifyResponse'
+  /auth/restore:
+    post:
+      tags:
+      - Auth
+      summary: Restore a password
+      description: Send a verify code to restore a password
+      operationId: authRestore
+      parameters:
+      - $ref: '#/components/parameters/IParameterLogin'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IRestoreResponse'
+  /auth/restore/verify:
+    post:
+      tags:
+      - Auth
+      summary: verify a password reset
+      description: verify a password reset for account and get a token
+      operationId: authRestoreVerify
+      parameters:
+      - $ref: '#/components/parameters/IParameterLogin'
+      - $ref: '#/components/parameters/IParameterPassword'
+      - $ref: '#/components/parameters/IParameterHash'
+      - $ref: '#/components/parameters/IParameterCode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IRestoreVerifyResponse'
+  /discover/watching/{page}:
+    get:
+      tags:
+      - Discover
+      summary: Watching now
+      description: Get currently watching releases by users
+      operationId: discoverWatching
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /discover/discussing:
+    get:
+      tags:
+      - Discover
+      summary: Most discussing releases
+      description: Get 5 currently most discussing releases by users
+      operationId: discoverDiscussing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /discover/recommendations/{page}:
+    get:
+      tags:
+      - Discover
+      summary: Get recommendations list
+      description: Get recommendations list. Authentication is required
+      operationId: discoverRecommendations
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterPreviousPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /discover/interesting:
+    get:
+      tags:
+      - Discover
+      summary: Interesting releases
+      description: Get currently Interesting releases by users
+      operationId: discoverInteresting
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDiscoverInterestingResponse'
+      security:
+      - token: []
+  /discover/comments:
+    get:
+      tags:
+      - Discover
+      summary: Get popular comments
+      description: Get 10 popular comments
+      operationId: discoverComments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentReleasePagedResponse'
+      security:
+      - token: []
+  /notification/count:
+    get:
+      tags:
+      - Notification
+      summary: Count unread notifications
+      description: Get count of unread notifications
+      operationId: notificationCount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/INotificationCountResponse'
+      security:
+      - token: []
+  /notification/all/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all notifications
+      description: Get all notifications
+      operationId: notificationAll
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/INotificationAllPagedResponse'
+      security:
+      - token: []
+  /notification/friends/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all friends notifications
+      description: Get all friends notifications
+      operationId: notificationFriends
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IFriendNotification'
+      security:
+      - token: []
+  /notification/related/release/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all related releases notifications
+      description: Get all related releases notifications
+      operationId: notificationRelatedRelease
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IRelatedReleaseNotification'
+      security:
+      - token: []
+  /notification/episodes/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all episodes notifications
+      description: Get all episodes notifications
+      operationId: notificationEpisodes
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IEpisodeNotification'
+      security:
+      - token: []
+  /notification/releaseComments/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all release comments notifications
+      description: Get all release comments notifications
+      operationId: notificationReleaseComments
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IReleaseCommentNotification'
+      security:
+      - token: []
+  /notification/collectionComments/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all collection comments notifications
+      description: Get all collection comments notifications
+      operationId: notificationCollectionComments
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ICollectionCommentNotification'
+      security:
+      - token: []
+  /notification/articles/{page}:
+    get:
+      tags:
+      - Notification
+      summary: Get all articles notifications
+      description: Get all articles notifications
+      operationId: notificationArticles
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IArticleNotification'
+      security:
+      - token: []
+  /notification/read:
+    get:
+      tags:
+      - Notification
+      summary: Read all notifications
+      description: Read all notifications
+      operationId: notificationRead
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /notification/{type}/delete/{id}:
+    get:
+      tags:
+      - Notification
+      summary: Delete a specific notifications
+      description: 'Delete a specific notifications
+
+
+        Note: `related/release` is not working in the docs, because of the url escaping
+
+        '
+      operationId: notificationDeleteOne
+      parameters:
+      - in: path
+        name: type
+        required: true
+        schema:
+          enum:
+          - friend
+          - episode
+          - releaseComment
+          - collectionComment
+          - article
+          - related/release
+          example: episode
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /notification/delete/all:
+    get:
+      tags:
+      - Notification
+      summary: Delete all notifications
+      description: Delete all notifications
+      operationId: notificationDelete
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /collection/all/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all collections
+      description: Get all collections
+      operationId: collectionAll
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterPreviousPage'
+      - $ref: '#/components/parameters/ICollectionAllSort'
+      - name: where
+        in: query
+        schema:
+          type: number
+          example: 1
+          required: false
+          description: it is always '1' on discovery page. Other values are unknown.
+            Otherwise is omitted
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ICollection'
+      security:
+      - token: []
+  /collection/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Get a collection
+      description: Get a collection
+      operationId: getCollectionInfo
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICollectionResponse'
+      security:
+      - token: []
+  /collection/{id}/releases/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get a collection releases
+      description: Get a collection releases
+      operationId: collectionReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/IRelease'
+      security:
+      - token: []
+  /collectionFavorite/all/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all favorite collections
+      description: Get all favorite collections
+      operationId: collectionFavoriteAll
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ICollection'
+      security:
+      - token: []
+  /collectionFavorite/add/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Add a collection to favorites
+      description: Add a collection to favorites
+      operationId: collectionFavoriteAdd
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: '#/components/schemas/FavoriteCollectionAddResult'
+      security:
+      - token: []
+  /collectionFavorite/delete/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Delete a collection from favorites
+      description: Delete a collection from favorites
+      operationId: collectionFavoriteDelete
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: '#/components/schemas/FavoriteCollectionDeleteResult'
+      security:
+      - token: []
+  /collection/all/release/{id}/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all collections that contains a release
+      description: Get all collections that contains a release
+      operationId: collectionReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICollectionAllSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ICollection'
+      security:
+      - token: []
+  /collection/all/profile/{id}/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all collections of a user
+      description: Get all collections of a user
+      operationId: collectionProfiles
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IPagedResponseBase'
+                - type: object
+                  properties:
+                    content:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ICollection'
+      security:
+      - token: []
+  /collectionMy/create:
+    post:
+      tags:
+      - Collection
+      summary: Create a collection
+      description: Create a collection
+      operationId: collectionMyCreate
+      parameters:
+      - $ref: '#/components/parameters/IParameterUserAgentHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICollectionCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICollectionCreateEditResponse'
+      security:
+      - token: []
+  /collectionMy/edit/{id}:
+    post:
+      tags:
+      - Collection
+      summary: Edit a collection
+      description: Edit a collection
+      operationId: collectionMyEdit
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICollectionCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICollectionCreateEditResponse'
+      security:
+      - token: []
+  /collectionMy/editImage/{id}:
+    post:
+      tags:
+      - Collection
+      summary: Edit a image of a collection
+      description: Edit a image of a collection
+      operationId: collectionMyEditImage
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/IEditImageRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IEditImageResponse'
+      security:
+      - token: []
+  /collectionMy/delete/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Delete a collection
+      description: Delete a collection
+      operationId: collectionMyDelete
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICollectionDeleteResponse'
+      security:
+      - token: []
+  /collection/comment/all/{id}/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all comments of a collection
+      description: Get all comments of a collection
+      operationId: collectionComments
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentCollectionPagedResponse'
+  /collection/comment/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Get a comment of a collection
+      description: Get a comment of a collection
+      operationId: collectionComment
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    code:
+                      $ref: '#/components/schemas/DefaultResultEnum'
+                - $ref: '#/components/schemas/ICollectionComment'
+  /collection/comment/replies/{id}/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all replies of a comment
+      description: Get all replies of a comment
+      operationId: collectionCommentReplies
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentCollectionPagedResponse'
+  /collection/comment/votes/{id}/{page}:
+    get:
+      tags:
+      - Collection
+      summary: Get all votes of a comment
+      description: Get all votes of a comment
+      operationId: collectionCommentVotes
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentVotesSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentVotesResponse'
+  /collection/comment/add/{id}:
+    post:
+      tags:
+      - Collection
+      summary: Add a comment to a collection
+      description: Add a comment to a collection
+      operationId: collectionCommentAdd
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICommentRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /collection/comment/edit/{id}:
+    post:
+      tags:
+      - Collection
+      summary: Edit a comment of a collection
+      description: Edit a comment of a collection
+      operationId: collectionCommentEdit
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICommentEditRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /collection/comment/delete/{id}:
+    get:
+      tags:
+      - Collection
+      summary: Delete a comment from a collection
+      description: Delete a comment from a collection
+      operationId: collectionCommentDelete
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /collection/comment/vote/{id}/{vote}:
+    get:
+      tags:
+      - Collection
+      summary: (Un)Vote a comment
+      description: (Un)Vote a comment
+      operationId: collectionCommentVote
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterCommentVote'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /release/collection/{id}/random:
+    get:
+      tags:
+      - Collection
+      summary: Get a random release of a collection
+      description: Get a random release of a collection
+      operationId: releaseCollectionRandom
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleaseResponse'
+  /filter/{page}:
+    post:
+      tags:
+      - Filter
+      summary: Get releases by filter
+      description: "Lists of releases on the main page use pre-defined filters.\n```\n
+        \   |     Tab     |        Value        |\n    | ----------- | -------------------
+        |\n    | Latest      | Default filter      |\n    | Anime       | country:
+        \"\u042F\u043F\u043E\u043D\u0438\u044F\"   |\n    | Dunhua      | country:
+        \"\u041A\u0438\u0442\u0430\u0439\"    |\n    | Finished    | status_id: 1
+        \       |\n    | Ongoing     | status_id: 2        |\n    | Announce    |
+        status_id: 3        |\n    | Films       | category_id: 2      |\n    | OVA
+        \        | category_id: 3      |\n```\n"
+      operationId: getFilter
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterExtendedMode'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FFilterRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /type/all:
+    get:
+      tags:
+      - Filter
+      summary: Get all VoiceOver types for Filter
+      description: Get all VoiceOver types for Filter
+      operationId: getAllTypes
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ITypeAllResponse'
+      security:
+      - token: []
+  /search/profiles/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search profiles
+      description: Search profiles
+      operationId: searchProfiles
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchProfilesPagedResponse'
+      security:
+      - token: []
+  /search/collections/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search collections
+      description: Search collections
+      operationId: searchCollections
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchCollectionsPagedResponse'
+      security:
+      - token: []
+  /search/favoriteCollections/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search favorite collections
+      description: Search favorite collections
+      operationId: searchFavoriteCollections
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchCollectionsPagedResponse'
+      security:
+      - token: []
+  /search/profileCollections/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search profile collections
+      description: Search profile collections
+      operationId: searchProfileCollections
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchCollectionsPagedResponse'
+      security:
+      - token: []
+  /search/releases/{page}/:
+    post:
+      tags:
+      - Search
+      summary: Search releases (Api-Version v1)
+      description: Search releases, old api (Anixart 8.x.x)
+      operationId: searchReleasesV1
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchReleasesRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchReleasesV1PagedResponse'
+      security:
+      - token: []
+  /search/releases/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search releases (Api-Version v2)
+      description: Search releases, new api (Anixart 9.x.x)
+      operationId: searchReleasesV2
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterApiVersionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchReleasesRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchReleasesV2PagedResponse'
+      security:
+      - token: []
+  /search/favorites/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search favorite releases
+      description: Search favorite releases
+      operationId: searchFavoriteReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchReleasesV1PagedResponse'
+      security:
+      - token: []
+  /search/history/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search watching history releases
+      description: Search watching history releases
+      operationId: searchHistoryReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchReleasesV1PagedResponse'
+      security:
+      - token: []
+  /search/profile/list/{list}/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search releases in list
+      description: Search releases in list
+      operationId: searchListReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterProfileList'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchReleasesV1PagedResponse'
+      security:
+      - token: []
+  /search/channels/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search channels
+      description: Search channels
+      operationId: "searchList\u0421hannels"
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchChannelsPagedResponse'
+      security:
+      - token: []
+  /search/articles/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search articles
+      description: Search articles
+      operationId: searchListArticles
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchArticlesPagedResponse'
+      security:
+      - token: []
+  /search/feed/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search feed
+      description: Search feed
+      operationId: searchListFeed
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IFeedSearchResponse'
+      security:
+      - token: []
+  /search/channel/{id}/subscribers/{page}:
+    post:
+      tags:
+      - Search
+      summary: Search channel subscribers
+      description: Search channel subscribers
+      operationId: searchChannelSubscribers
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ISearchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchIProfileChannelPagedResponse'
+      security:
+      - token: []
+  /profile/info:
+    get:
+      tags:
+      - Profile
+      summary: Get own profile basic info
+      description: Get own profile basic info
+      operationId: profileOwnInfo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileInfoResponse'
+      security:
+      - token: []
+  /profile/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Get user profile
+      description: Get user profile
+      operationId: getProfile
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: '#/components/schemas/DefaultResultEnum'
+                  profile:
+                    $ref: '#/components/schemas/IProfile'
+                  is_my_profile:
+                    type: boolean
+                    example: false
+      security:
+      - token: []
+  /profile/list/all/{list}/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get own list
+      description: Get own list
+      operationId: getOwnProfileList
+      parameters:
+      - $ref: '#/components/parameters/IParameterProfileList'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterSort'
+      - $ref: '#/components/parameters/IListParameterFilterAnnounce'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /profile/list/all/{id}/{list}/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get user list
+      description: Get user list
+      operationId: getUserProfileList
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterProfileList'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterSort'
+      - $ref: '#/components/parameters/IListParameterFilterAnnounce'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /favorite/all/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get favorite releases
+      description: Get favorite releases
+      operationId: getOwnFavorites
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterSort'
+      - $ref: '#/components/parameters/IListParameterFilterAnnounce'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /history/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get watch history
+      description: Get watch history
+      operationId: getOwnHistory
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /profile/friend/recomendations:
+    get:
+      tags:
+      - Profile
+      summary: Get recommended friends
+      description: Get recommended friends
+      operationId: getRecomendFriends
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileShortPagedResponse'
+      security:
+      - token: []
+  /profile/friend/all/{id}/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get user friends
+      description: Get user friends
+      operationId: getProfileFriends
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileShortPagedResponse'
+      security:
+      - token: []
+  /profile/friend/requests/{type}/last:
+    get:
+      tags:
+      - Profile
+      summary: Get last friend requests
+      description: Get last friend requests
+      operationId: getLastFriendRequests
+      parameters:
+      - $ref: '#/components/parameters/IParameterFriendRequestType'
+      - in: query
+        name: count
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileShortPagedResponse'
+      security:
+      - token: []
+  /profile/friend/requests/{type}/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get all friend requests
+      description: Get all friend requests
+      operationId: getAllFriendRequests
+      parameters:
+      - $ref: '#/components/parameters/IParameterFriendRequestType'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileShortPagedResponse'
+      security:
+      - token: []
+  /profile/friend/request/send/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Send friend request
+      description: Send friend request
+      operationId: sendFriendRequest
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IFriendRequestResponse'
+      security:
+      - token: []
+  /profile/friend/request/remove/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Remove friend request
+      description: Remove friend request
+      operationId: removeFriendRequest
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IUnfriendRequestResponse'
+      security:
+      - token: []
+  /profile/friend/request/hide/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Hide friend request
+      description: Hide friend request
+      operationId: hideFriendRequest
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /profile/social/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Get user social
+      description: Get user social
+      operationId: getProfileSocial
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/IDefaultResponse'
+                - $ref: '#/components/schemas/ISocialResponse'
+      security:
+      - token: []
+  /achivement/get/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Get achivement
+      description: Get achivement
+      operationId: getProfileAchivement
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+          - type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IAchivementResponse'
+      security:
+      - token: []
+  /profile/blocklist/all/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get blocklist
+      description: Get blocklist
+      operationId: getProfileBlocklist
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IBlocklistPagedResponse'
+      security:
+      - token: []
+  /profile/blocklist/add/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Add user to blocklist
+      description: Add user to blocklist
+      operationId: addProfileToBlocklist
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IBlocklistAddResponse'
+      security:
+      - token: []
+  /profile/blocklist/remove/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Remove user from blocklist
+      description: Remove user from blocklist
+      operationId: removeProfileFromBlocklist
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /profile/vote/release/voted/{id}/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get voted releases
+      description: Get voted releases
+      operationId: getProfileVotedReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterVotedSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IVoteReleasePagedResponse'
+      security:
+      - token: []
+  /profile/vote/release/unvoted/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get own unvoted releases
+      description: Get own unvoted releases
+      operationId: getProfileUnvotedReleases
+      parameters:
+      - name: page
+        in: path
+        description: page
+        required: true
+        schema:
+          oneOf:
+          - type: integer
+            example: 0
+          - type: string
+            const: last
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IVoteReleasePagedResponse'
+      security:
+      - token: []
+  /role/all/{page}/{id}:
+    get:
+      tags:
+      - Profile
+      summary: Get all profiles with this role id
+      description: Get all profiles with this role id
+      operationId: getAllProfilesWithRole
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IProfileShortPagedResponse'
+      security:
+      - token: []
+  /channel/subscription/all/{page}:
+    get:
+      tags:
+      - Profile
+      summary: Get all subscriptions
+      description: Get all subscriptions
+      operationId: getAllSubscriptions
+      parameters:
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISearchChannelsPagedResponse'
+      security:
+      - token: []
+  /channel/subscription/count:
+    get:
+      tags:
+      - Profile
+      summary: Get count of subscriptions
+      description: Get count of subscriptions
+      operationId: getSubscriptionCount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISubscriptionCountResponse'
+      security:
+      - token: []
+  /export/bookmarks:
+    post:
+      tags:
+      - Profile
+      summary: Export bookmarks
+      description: Export bookmarks
+      operationId: exportBookmarks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IExportBookmarksRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IExportBookmarksResponse'
+      security:
+      - token: []
+  /release/{id}:
+    get:
+      tags:
+      - Release
+      summary: Get release
+      description: Get release
+      operationId: getRelease
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterExtendedMode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleaseResponse'
+      security:
+      - token: []
+  /release/random:
+    get:
+      tags:
+      - Release
+      summary: Get random release
+      description: Get random release
+      operationId: getRandomRelease
+      parameters:
+      - $ref: '#/components/parameters/IParameterExtendedMode'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleaseResponse'
+      security:
+      - token: []
+  /release/vote/add/{id}/{vote}:
+    get:
+      tags:
+      - Release
+      summary: Set a vote to a release
+      description: Set a vote to a release
+      operationId: ReleaseVote
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterReleaseVote'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /release/vote/delete/{id}:
+    get:
+      tags:
+      - Release
+      summary: Remove a vote to a release
+      description: Remove a vote to a release
+      operationId: ReleaseUnvote
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /collectionMy/release/add/{id}:
+    get:
+      tags:
+      - Release
+      summary: Add release to collection
+      description: Add release to collection
+      operationId: collectionMyReleaseAdd
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - in: query
+        name: release_id
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICollectionAddReleaseResponse'
+      security:
+      - token: []
+  /profile/list/add/{list}/{id}:
+    get:
+      tags:
+      - Release
+      summary: Add release to list
+      description: Add release to list
+      operationId: addToList
+      parameters:
+      - $ref: '#/components/parameters/IParameterProfileList'
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /profile/list/delete/{list}/{id}:
+    get:
+      tags:
+      - Release
+      summary: Remove release from list
+      description: Remove release from list
+      operationId: removeFromList
+      parameters:
+      - $ref: '#/components/parameters/IParameterProfileList'
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /favorite/add/{id}:
+    get:
+      tags:
+      - Release
+      summary: Add release to favorites
+      description: Add release to favorites
+      operationId: addReleaseToFav
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /favorite/delete/{id}:
+    get:
+      tags:
+      - Release
+      summary: Remove release from favorites
+      description: Remove release from favorites
+      operationId: removeReleaseFromFav
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /release/comment/all/{id}/{page}:
+    get:
+      tags:
+      - Release
+      summary: Get all comments of a release
+      description: Get all comments of a release
+      operationId: releaseComments
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentReleasePagedResponse'
+  /release/comment/replies/{id}/{page}:
+    get:
+      tags:
+      - Release
+      summary: Get all replies of a comment
+      description: Get all replies of a comment
+      operationId: ReleaseCommentReplies
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentReleasePagedResponse'
+  /release/comment/votes/{id}/{page}:
+    get:
+      tags:
+      - Release
+      summary: Get all votes of a comment
+      description: Get all votes of a comment
+      operationId: ReleaseCommentVotes
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/ICommentVotesSort'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ICommentVotesResponse'
+  /release/comment/add/{id}:
+    post:
+      tags:
+      - Release
+      summary: Add a comment to a release
+      description: Add a comment to a release
+      operationId: ReleaseCommentAdd
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICommentRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /release/comment/edit/{id}:
+    post:
+      tags:
+      - Release
+      summary: Edit a comment of a release
+      description: Edit a comment of a Release
+      operationId: ReleaseCommentEdit
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ICommentEditRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /release/comment/delete/{id}:
+    get:
+      tags:
+      - Release
+      summary: Delete a comment from a release
+      description: Delete a comment from a release
+      operationId: ReleaseCommentDelete
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /release/comment/vote/{id}/{vote}:
+    get:
+      tags:
+      - Release
+      summary: (Un)Vote a comment
+      description: (Un)Vote a comment
+      operationId: ReleaseCommentVote
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterCommentVote'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+  /related/{id}/{page}:
+    get:
+      tags:
+      - Release
+      summary: Get related releases
+      description: Get related releases
+      operationId: getRelatedReleases
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      - $ref: '#/components/parameters/IParameterApiVersionHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IReleasesPagedResponse'
+      security:
+      - token: []
+  /release/streaming/platform/{id}:
+    get:
+      tags:
+      - Release
+      summary: Get streaming platforms
+      description: Get streaming platforms
+      operationId: getStreamingPlatforms
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IVideoStreamingPlatformsPagedResponse'
+  /video/release/{id}:
+    get:
+      tags:
+      - Release
+      summary: Get videos of a release
+      description: Get videos of a release
+      operationId: getVideoOfARelease
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IVideoResponse'
+      security:
+      - token: []
+  /video/release/{id}/category/{category}/{page}:
+    get:
+      tags:
+      - Release
+      summary: Get videos of a release in a category
+      description: Get videos of a release in a category
+      operationId: getVideoOfAReleaseInCategory
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterVideoCategory'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IVideoPagedResponse'
+      security:
+      - token: []
+  /episode/watch/{id}/{sourceId}/{episodePosition}:
+    get:
+      tags:
+      - Episode
+      summary: Mark episode as watched
+      description: Mark episode as watched
+      operationId: markEpisodeAsWatched
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeSourceId'
+      - $ref: '#/components/parameters/IParameterEpisodePosition'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /episode/unwatch/{id}/{sourceId}/{episodePosition}:
+    get:
+      tags:
+      - Episode
+      summary: Unmark episode as watched
+      description: Unmark episode as watched
+      operationId: unmarkEpisodeAsWatched
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeSourceId'
+      - $ref: '#/components/parameters/IParameterEpisodePosition'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /history/add/{id}/{sourceId}/{episodePosition}:
+    get:
+      tags:
+      - Episode
+      summary: Add episode to history
+      description: Add episode to history
+      operationId: addToHistory
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeSourceId'
+      - $ref: '#/components/parameters/IParameterEpisodePosition'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /history/delete/{id}:
+    get:
+      tags:
+      - Episode
+      summary: Remove episode from history
+      description: Remove episode from history
+      operationId: removeFromHistory
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDefaultResponse'
+      security:
+      - token: []
+  /episode/{id}:
+    get:
+      tags:
+      - Episode
+      summary: Get episode dubbers
+      description: Get episode dubbers
+      operationId: getEpisodeDubs
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IDubbersResponse'
+      security:
+      - token: []
+  /episode/{id}/{episodeDubberId}:
+    get:
+      tags:
+      - Episode
+      summary: Get episode sources for dubber id
+      description: Get episode sources for dubber id
+      operationId: getEpisodeSourcesForDubber
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeDubberId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ISourcesResponse'
+      security:
+      - token: []
+  /episode/{id}/{episodeDubberId}/{sourceId}:
+    get:
+      tags:
+      - Episode
+      summary: Get episode
+      description: Get episode
+      operationId: getEpisode
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeDubberId'
+      - $ref: '#/components/parameters/IParameterEpisodeSourceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IEpisodesResponse'
+      security:
+      - token: []
+  /episode/target/{id}/{sourceId}/{episodePosition}:
+    get:
+      tags:
+      - Episode
+      summary: Get episode target
+      description: Get episode target
+      operationId: getEpisodeTarget
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterEpisodeSourceId'
+      - $ref: '#/components/parameters/IParameterEpisodePosition'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IEpisodeResponse'
+      security:
+      - token: []
+  /episode/updates/{id}/{page}:
+    get:
+      tags:
+      - Episode
+      summary: Get episode updates
+      description: Get episode updates
+      operationId: getEpisodeUpdates
+      parameters:
+      - $ref: '#/components/parameters/IParameterId'
+      - $ref: '#/components/parameters/IParameterQueryPage'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ILastEpisodeUpdatePagedResponse'
+      security:
+      - token: []
+servers:
+- url: https://api-s.anixsekai.com
+- url: https://api.anixsekai.com
+tags:
+- name: Config
+  description: Anixart app config
+- name: Auth
+  description: User authentication
+- name: Discover
+  description: Discover content
+- name: Notification
+  description: User notifications
+- name: Collection
+  description: Collections management and viewing
+- name: Filter
+  description: Release filtering
+- name: Search
+  description: Searching
+- name: Profile
+  description: Profiles
+- name: Release
+  description: Release
+- name: Episode
+  description: Episode
+components:
+  schemas:
+    ICollectionCreateRequest:
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        releases:
+          items:
+            type: integer
+          type: array
+        is_private:
+          type: boolean
+      required:
+      - title
+      - description
+      - releases
+      - is_private
+      additionalProperties: false
+      type: object
+    IEditImageRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+          description: The image to upload (.jpg, .png, .gif, .webp)
+        name:
+          type: string
+          example: image
+      encoding:
+        image:
+          contentType: image/jpeg, image/png, image/gif, image/webp
+        name:
+          contentType: text/plain
+    ICommentRequest:
+      type: object
+      properties:
+        parentCommentId:
+          type: integer
+          nullable: true
+          example: null
+        replyToProfileId:
+          type: integer
+          nullable: true
+          example: null
+        message:
+          type: string
+        spoiler:
+          type: boolean
+          example: false
+    ICommentEditRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        spoiler:
+          type: boolean
+          example: false
+    FFilterRequest:
+      properties:
+        country:
+          type: string
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FCountry'
+        category_id:
+          type: integer
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FCategoryId'
+        status_id:
+          type: integer
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FStatusId'
+        genres:
+          type: array
+          nullable: false
+          example: []
+          items:
+            $ref: '#/components/schemas/FGenres'
+        is_genres_exclude_mode_enabled:
+          type: boolean
+          nullable: false
+          example: false
+        profile_list_exclusions:
+          type: array
+          nullable: false
+          example: []
+          items:
+            $ref: '#/components/schemas/FProfileListExclusions'
+        types:
+          type: array
+          nullable: false
+          example: []
+          items:
+            type: integer
+          description: Fetched from /type/all endpoint
+        studio:
+          type: string
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FStudio'
+        source:
+          type: string
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FSource'
+        start_year:
+          type: integer
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FYear'
+        end_year:
+          type: integer
+          nullable: true
+          example: null
+          $ref: '#/components/schemas/FYear'
+        season:
+          $ref: '#/components/schemas/FSeasonId'
+        episodes_from:
+          $ref: '#/components/schemas/FEpisodeCount'
+        episodes_to:
+          $ref: '#/components/schemas/FEpisodeCount'
+        episode_duration_from:
+          $ref: '#/components/schemas/FEpisodeDuration'
+        episode_duration_to:
+          $ref: '#/components/schemas/FEpisodeDuration'
+        age_ratings:
+          $ref: '#/components/schemas/FAgeRating'
+        sort:
+          $ref: '#/components/schemas/FSort'
+    ISearchReleasesRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        searchBy:
+          type: integer
+          enum:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          x-enumNames:
+          - Title
+          - Studio
+          - Director
+          - Author
+          - Genre
+      required:
+      - query
+      - searchBy
+    ISearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        searchBy:
+          type: integer
+          enum:
+          - 0
+          x-enumNames:
+          - None
+      required:
+      - query
+      - searchBy
+    IExportBookmarksRequest:
+      type: object
+      properties:
+        bookmarksExportProfileLists:
+          type: array
+          items:
+            anyOf:
+            - const: 0
+              title: NotWatchingOrAny
+              description: NotWatchingOrAny
+            - const: 1
+              title: Watching
+              description: Watching
+            - const: 2
+              title: PlanToWatch
+              description: PlanToWatch
+            - const: 3
+              title: Completed
+              description: Completed
+            - const: 4
+              title: OnHold
+              description: OnHold
+            - const: 5
+              title: Dropped
+              description: Dropped
+    IDefaultResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+      required:
+      - code
+    ILoginResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/LoginResult'
+        profile:
+          $ref: '#/components/schemas/IProfile'
+        profileToken:
+          $ref: '#/components/schemas/IProfileToken'
+    IRegisterResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/RegisterResult'
+        hash:
+          type: string
+          example: hash
+        codeTimestampExpires:
+          type: integer
+    IRegisterVerifyResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/RegisterVerifyResult'
+        profile:
+          $ref: '#/components/schemas/IProfile'
+        profileToken:
+          $ref: '#/components/schemas/IProfileToken'
+    IRestoreResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/RestoreResult'
+        hash:
+          type: string
+          example: hash
+        codeTimestampExpires:
+          type: integer
+    IRestoreVerifyResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/RestoreVerifyResult'
+        profile:
+          $ref: '#/components/schemas/IProfile'
+        profileToken:
+          $ref: '#/components/schemas/IProfileToken'
+    IReleasesPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IRelease'
+    IDiscoverInterestingResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IInterestingRelease'
+    ICommentReleasePagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICommentRelease'
+    ICommentCollectionPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICollectionComment'
+    INotificationCountResponse:
+      properties:
+        count:
+          type: integer
+      required:
+      - count
+      additionalProperties: false
+      type: object
+    INotificationAllPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              oneOf:
+              - $ref: '#/components/schemas/IFriendNotification'
+              - $ref: '#/components/schemas/IRelatedReleaseNotification'
+              - $ref: '#/components/schemas/IEpisodeNotification'
+              - $ref: '#/components/schemas/IArticleNotification'
+              - $ref: '#/components/schemas/IReleaseCommentNotification'
+              - $ref: '#/components/schemas/ICollectionCommentNotification'
+    IConfigTogglesResponse:
+      type: object
+      properties:
+        minVersionCode:
+          type: integer
+        lastVersionCode:
+          type: integer
+        whatsNew:
+          type: string
+        downloadLink:
+          type: string
+        minGPVersionCode:
+          type: integer
+        lastGPVersionCode:
+          type: integer
+        gpWhatsNew:
+          type: string
+        gpDownloadLink:
+          type: string
+        overrideGPVersion:
+          type: string
+        inAppUpdates:
+          type: boolean
+        inAppUpdatesImmediate:
+          type: boolean
+        inAppUpdatesFlexibleDelay:
+          type: integer
+        impMessageEnabled:
+          type: boolean
+        impMessageText:
+          type: string
+        impMessageBackgroundColor:
+          type: string
+        impMessageTextColor:
+          type: string
+        impMessageLink:
+          type: string
+        adBannerBlockId:
+          type: string
+        adBannerSizeType:
+          type: integer
+        adInterstitialBlockId:
+          type: string
+        adBannerDelay:
+          type: integer
+        adInterstitialDelay:
+          type: integer
+        kodikVideoLinksUrl:
+          type: string
+        kodikIframeAd:
+          type: boolean
+        sibnetRandUserAgent:
+          type: boolean
+        sibnetUserAgent:
+          type: string
+        torlookUrl:
+          type: string
+        baseUrl:
+          type: string
+        apiUrl:
+          type: string
+        apiAltUrl:
+          type: string
+        apiAltAvailable:
+          type: boolean
+        iframeEmbedUrl:
+          type: string
+        kodikAdIframeUrl:
+          type: string
+        editorUrl:
+          type: string
+        staticDomain:
+          type: string
+        sponsorshipPromotion:
+          type: boolean
+        sponsorshipText:
+          type: string
+        sponsorshipAvailable:
+          type: boolean
+        pageNoConnectionUrl:
+          type: string
+        snowfall:
+          type: boolean
+        searchBarIconUrl:
+          type: string
+        searchBarIconTint:
+          type: string
+        searchBarIconAction:
+          type: string
+        searchBarIconValue:
+          type: string
+        minBlogCreateRatingScore:
+          type: integer
+        min_blog_create_rating_score:
+          type: integer
+      required:
+      - minVersionCode
+      - lastVersionCode
+      - whatsNew
+      - downloadLink
+      - minGPVersionCode
+      - lastGPVersionCode
+      - gpWhatsNew
+      - gpDownloadLink
+      - overrideGPVersion
+      - inAppUpdates
+      - inAppUpdatesImmediate
+      - inAppUpdatesFlexibleDelay
+      - impMessageEnabled
+      - impMessageText
+      - impMessageBackgroundColor
+      - impMessageTextColor
+      - impMessageLink
+      - adBannerBlockId
+      - adBannerSizeType
+      - adInterstitialBlockId
+      - adBannerDelay
+      - adInterstitialDelay
+      - kodikVideoLinksUrl
+      - kodikIframeAd
+      - sibnetRandUserAgent
+      - sibnetUserAgent
+      - torlookUrl
+      - baseUrl
+      - apiUrl
+      - apiAltUrl
+      - apiAltAvailable
+      - iframeEmbedUrl
+      - kodikAdIframeUrl
+      - editorUrl
+      - staticDomain
+      - sponsorshipPromotion
+      - sponsorshipText
+      - sponsorshipAvailable
+      - pageNoConnectionUrl
+      - snowfall
+      - searchBarIconUrl
+      - searchBarIconTint
+      - searchBarIconAction
+      - searchBarIconValue
+      - minBlogCreateRatingScore
+      - min_blog_create_rating_score
+    IConfigUrlsResponse:
+      type: object
+      properties:
+        api_urls:
+          type: array
+          items:
+            type: string
+        should_use_mirror_urls:
+          type: boolean
+          example: false
+    IICollectionResponse:
+      type: object
+      properties:
+        collection:
+          $ref: '#/components/schemas/ICollection'
+        watching_count:
+          type: integer
+        plan_count:
+          type: integer
+        completed_count:
+          type: integer
+        hold_on_count:
+          type: integer
+        dropped_count:
+          type: integer
+    ICollectionResponse:
+      allOf:
+      - type: object
+        properties:
+          code:
+            $ref: '#/components/schemas/CollectionResult'
+      - $ref: '#/components/schemas/IICollectionResponse'
+    ICollectionCreateEditResponse:
+      allOf:
+      - type: object
+        properties:
+          code:
+            $ref: '#/components/schemas/CollectionCreateEditResult'
+      - $ref: '#/components/schemas/IICollectionResponse'
+    ICollectionDeleteResponse:
+      allOf:
+      - type: object
+        properties:
+          code:
+            $ref: '#/components/schemas/CollectionDeleteResult'
+    ICollectionAddReleaseResponse:
+      allOf:
+      - type: object
+        properties:
+          code:
+            $ref: '#/components/schemas/CollectionAddReleaseResult'
+    ICommentVotesResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ICommentVote'
+    IReleaseResponse:
+      properties:
+        release:
+          $ref: '#/components/schemas/IRelease'
+      required:
+      - release
+      additionalProperties: false
+      type: object
+    IEditImageResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        image_url:
+          type: string
+    ITypeAllResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        types:
+          type: array
+          items:
+            $ref: '#/components/schemas/FType'
+    ISearchProfilesPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                login:
+                  type: string
+                avatar:
+                  type: string
+                is_sponsor:
+                  type: boolean
+                is_online:
+                  type: boolean
+                is_verified:
+                  type: boolean
+                badge_id:
+                  type: integer
+                badge_name:
+                  type: string
+                badge_type:
+                  type: integer
+                badge_url:
+                  type: string
+              required:
+              - id
+              - login
+              - avatar
+              - is_sponsor
+              - is_online
+              - is_verified
+              - badge_id
+              - badge_name
+              - badge_type
+              - badge_url
+    ISearchCollectionsPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                image:
+                  type: string
+                favorites_count:
+                  type: integer
+                creation_date:
+                  type: integer
+                last_update_date:
+                  type: integer
+                creator_id:
+                  type: integer
+                is_private:
+                  type: boolean
+                is_deleted:
+                  type: boolean
+                is_favorite:
+                  type: boolean
+              required:
+              - id
+              - title
+              - description
+              - image
+              - favorites_count
+              - creation_date
+              - last_update_date
+              - creator_id
+              - is_private
+              - is_deleted
+              - is_favorite
+    ISearchChannelsPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IChannel'
+    ISearchArticlesPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IArticle'
+    ISearchIProfileChannelPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IProfileChannel'
+    ISearchReleasesV1PagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              type: object
+              properties:
+                translators:
+                  type: string
+                note:
+                  type: string
+                  nullable: true
+                id:
+                  type: integer
+                broadcast:
+                  type: integer
+                year:
+                  type: string
+                  nullable: true
+                country:
+                  type: string
+                  nullable: true
+                duration:
+                  type: integer
+                  nullable: true
+                source:
+                  type: string
+                  nullable: true
+                description:
+                  type: string
+                image:
+                  type: string
+                genres:
+                  type: string
+                studio:
+                  type: string
+                season:
+                  type: integer
+                author:
+                  type: string
+                poster:
+                  type: string
+                director:
+                  type: string
+                rating:
+                  type: integer
+                grade:
+                  type: number
+                status_id:
+                  type: integer
+                favorites_count:
+                  type: integer
+                creation_date:
+                  type: integer
+                last_update_date:
+                  type: integer
+                title_ru:
+                  type: string
+                title_original:
+                  type: string
+                  nullable: true
+                episodes_released:
+                  type: integer
+                  nullable: true
+                episodes_total:
+                  type: integer
+                  nullable: true
+                release_date:
+                  type: string
+                aired_on_date:
+                  type: integer
+                  nullable: true
+                age_rating:
+                  type: integer
+                profile_list_status:
+                  type: integer
+                  nullable: true
+                vote_count:
+                  type: integer
+                is_adult:
+                  type: boolean
+                is_play_disabled:
+                  type: boolean
+                is_deleted:
+                  type: boolean
+                is_viewed:
+                  type: boolean
+                is_favorite:
+                  type: boolean
+              required:
+              - id
+              - broadcast
+              - year
+              - country
+              - duration
+              - description
+              - image
+              - genres
+              - studio
+              - season
+              - author
+              - poster
+              - director
+              - rating
+              - favorites_count
+              - creation_date
+              - last_update_date
+              - title_ru
+              - title_original
+              - episodes_released
+              - episodes_total
+              - release_date
+              - aired_on_date
+              - age_rating
+              - profile_list_status
+              - vote_count
+              - is_adult
+              - is_play_disabled
+              - is_deleted
+              - is_viewed
+              - is_favorite
+    ISearchReleasesV2PagedResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        related:
+          $ref: '#/components/schemas/IRelated'
+        releases:
+          type: array
+          items:
+            $ref: '#/components/schemas/IRelease'
+        total_count:
+          type: integer
+          example: 0
+        total_page_count:
+          type: integer
+          example: 0
+        current_page:
+          type: integer
+          example: 0
+    IProfileInfoResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        channel_id:
+          type: integer
+          nullable: true
+        privilege_level:
+          type: integer
+        rating_score:
+          type: integer
+        sponsorship_expires:
+          type: integer
+        is_sponsor:
+          type: boolean
+          example: false
+        is_perm_banned:
+          type: boolean
+          example: false
+    IProfileShortPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IProfileShort'
+    IFriendRequestResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/SendFriendRequestResult'
+        friend_status:
+          $ref: '#/components/schemas/IFriendStatus'
+    IUnfriendRequestResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/SendUnfriendRequestResult'
+        friend_status:
+          $ref: '#/components/schemas/IFriendStatus'
+    IAchivementResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/IAchivementResult'
+    IBlocklistPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                login:
+                  type: string
+                avatar:
+                  type: string
+                is_sponsor:
+                  type: boolean
+                is_online:
+                  type: boolean
+                is_verified:
+                  type: boolean
+                badge_id:
+                  type: integer
+                badge_name:
+                  type: string
+                badge_type:
+                  type: integer
+                badge_url:
+                  type: string
+                added_date:
+                  type: integer
+              required:
+              - id
+              - login
+              - avatar
+              - is_sponsor
+              - is_online
+              - is_verified
+              - badge_id
+              - badge_name
+              - badge_type
+              - badge_url
+              - added_date
+    IBlocklistAddResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/IBlocklistAddResult'
+    IVoteReleasePagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IVoteRelease'
+    ISubscriptionCountResponse:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        subscription_count:
+          type: integer
+    IExportBookmarksResponse:
+      properties:
+        releases:
+          items:
+            $ref: '#/components/schemas/IExportRelease'
+          type: array
+      required:
+      - releases
+      additionalProperties: false
+      type: object
+    IVideoStreamingPlatformsPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IVideoStreamingPlatform'
+    IVideoPagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/IVideo'
+    ILastEpisodeUpdatePagedResponse:
+      allOf:
+      - $ref: '#/components/schemas/IPagedResponseBase'
+      - type: object
+        properties:
+          content:
+            type: array
+            items:
+              $ref: '#/components/schemas/ILastEpisodeUpdate'
+    DefaultResultEnum:
+      type: integer
+      format: integer
+      example: 0
+      enum:
+      - 0
+      - 1
+      - 401
+      - 402
+      - 403
+      x-enumNames:
+      - Success
+      - UnexpectedError
+      - Unauthorized
+      - Ban
+      - PermBan
+    LoginResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        x-enumNames:
+        - InvalidLogin
+        - InvalidPassword
+        title: Error Codes
+    RegisterResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        x-enumNames:
+        - InvalidLogin
+        - InvalidEmail
+        - InvalidPassword
+        - LoginAlreadyTaken
+        - EmailAlreadyTaken
+        - CodeAlreadySend
+        - CodeCannotSend
+        - EmailServiceDisallowed
+        - TooManyRegistrations
+        title: Error Codes
+    RegisterVerifyResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        x-enumNames:
+        - InvalidLogin
+        - InvalidEmail
+        - InvalidPassword
+        - LoginAlreadyTaken
+        - EmailAlreadyTaken
+        - CodeAlreadySend
+        - CodeCannotSend
+        - InvalidHash
+        - EmailServiceDisallowed
+        - TooManyRegistrations
+        title: Error Codes
+    RestoreResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        x-enumNames:
+        - ProfileNotFound
+        - CodeAlreadySend
+        - CodeCannotSend
+        title: Error Codes
+    RestoreVerifyResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        x-enumNames:
+        - ProfileNotFound
+        - InvalidPassword
+        - CodeInvalid
+        - CodeExpired
+        - InvalidHash
+        title: Error Codes
+    CollectionResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        x-enumNames:
+        - InvalidId
+        - IsPrivate
+        - IsDeleted
+        title: Error Codes
+    FavoriteCollectionAddResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        x-enumNames:
+        - CollectionNotFound
+        - CollectionAlreadyInFavorite
+        title: Error Codes
+    FavoriteCollectionDeleteResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        x-enumNames:
+        - CollectionNotFound
+        title: Error Codes
+    CollectionCreateEditResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        x-enumNames:
+        - InvalidTitle
+        - InvalidDescription
+        - InvalidReleases
+        - CollectionLimitReached
+        - CollectionNotFound
+        - CollectionNotOwned
+        - CollectionDeleted
+        - ReleaseLimitReached
+        title: Error Codes
+    CollectionDeleteResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        x-enumNames:
+        - CollectionNotFound
+        - CollectionNotOwned
+        - CollectionDeleted
+        title: Error Codes
+    CollectionAddReleaseResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        x-enumNames:
+        - CollectionNotFound
+        - CollectionNotOwned
+        - InvalidRelease
+        - ReleaseAlreadyInCollection
+        - CollectionDeleted
+        - ReleaseLimitReached
+        title: Error Codes
+    ICommentVote:
+      allOf:
+      - $ref: '#/components/schemas/IProfileShort'
+      - type: object
+        properties:
+          vote:
+            type: integer
+        required:
+        - vote
+        additionalProperties: false
+    SendFriendRequestResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        x-enumNames:
+        - RequestConfirmed
+        - RequestAlreadySent
+        - ProfileWasBlocked
+        - MyProfileWasBlocked
+        - FriendLimitReached
+        - TargetFriendLimitReached
+        - TargetFriendRequestsDisallowed
+        - FriendRequestLimitReached
+        title: Error Codes
+    SendUnfriendRequestResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        x-enumNames:
+        - RequestRemoved
+        - FriendshipRemoved
+        title: Error Codes
+    IFriendStatus:
+      type: integer
+      format: integer
+      example: 0
+      enum:
+      - null
+      - 0
+      - 1
+      - 2
+      x-enumNames:
+      - NotFriends_OR_Error
+      - Request_If_OwnUserId_LessThan_TargetUserId
+      - Request_If_OwnUserId_GreaterThan_TargetUserId
+      - Friends
+      title: Friend Status
+    IAchivementResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        - 3
+        x-enumNames:
+        - AlreadyGranted
+        - AchivementNotFound
+        title: Error Codes
+    IBlocklistAddResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        x-enumNames:
+        - AlreadyInBlocklist
+        title: Error Codes
+    IReleaseVideoResult:
+      type: integer
+      format: integer
+      example: 0
+      oneOf:
+      - $ref: '#/components/schemas/DefaultResultEnum'
+      - enum:
+        - 2
+        x-enumNames:
+        - InvalidReleaseId
+        title: Error Codes
+    IPagedResponseBase:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+          example: 0
+        content:
+          type: array
+        total_count:
+          type: integer
+          example: 0
+        total_page_count:
+          type: integer
+          example: 0
+        current_page:
+          type: integer
+          example: 0
+    IRegisterRequest:
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+      required:
+      - username
+      - password
+      - email
+      additionalProperties: false
+      type: object
+    IChannel:
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        avatar:
+          type: string
+        cover:
+          type: string
+        permission:
+          type: integer
+        article_count:
+          type: integer
+        subscriber_count:
+          type: integer
+        creation_date:
+          type: integer
+        last_update_date:
+          type: integer
+        is_blog:
+          type: boolean
+        is_commenting_enabled:
+          type: boolean
+        is_article_suggestion_enabled:
+          type: boolean
+        is_verified:
+          type: boolean
+        is_deleted:
+          type: boolean
+        blog_profile_id:
+          type: integer
+        is_subscribed:
+          type: boolean
+        is_blocked:
+          type: boolean
+        block_reason:
+          type: string
+        block_expire_date:
+          type: integer
+        is_perm_blocked:
+          type: boolean
+        is_administrator_or_higher:
+          type: boolean
+      required:
+      - id
+      - title
+      - description
+      - avatar
+      - cover
+      - permission
+      - article_count
+      - subscriber_count
+      - creation_date
+      - last_update_date
+      - is_blog
+      - is_commenting_enabled
+      - is_article_suggestion_enabled
+      - is_verified
+      - is_deleted
+      - blog_profile_id
+      - is_subscribed
+      - is_blocked
+      - block_reason
+      - block_expire_date
+      - is_perm_blocked
+      - is_administrator_or_higher
+      additionalProperties: false
+      type: object
+    IArticleTextBlock:
+      properties:
+        text:
+          type: string
+        text_length:
+          type: integer
+      required:
+      - text
+      - text_length
+      additionalProperties: false
+      type: object
+    IArticleHeaderBlock:
+      properties:
+        text:
+          type: string
+        text_length:
+          type: integer
+        level:
+          type: integer
+      required:
+      - text
+      - text_length
+      - level
+      additionalProperties: false
+      type: object
+    IArticleImageItem:
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        hash:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+      required:
+      - id
+      - url
+      - hash
+      - width
+      - height
+      additionalProperties: false
+      type: object
+    IArticleImageBlock:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/IArticleImageItem'
+          type: array
+        item_count:
+          type: integer
+      required:
+      - items
+      - item_count
+      additionalProperties: false
+      type: object
+    IArticleQuoteBlock:
+      properties:
+        text:
+          type: string
+        caption:
+          type: string
+        alignment:
+          type: string
+        text_length:
+          type: integer
+        caption_length:
+          type: integer
+      required:
+      - text
+      - caption
+      - alignment
+      - text_length
+      - caption_length
+      additionalProperties: false
+      type: object
+    IArticleListBlock:
+      properties:
+        style:
+          type: string
+        items:
+          items:
+            type: string
+          type: array
+        item_count:
+          type: integer
+      required:
+      - style
+      - items
+      - item_count
+      additionalProperties: false
+      type: object
+    IArticleEmbedBlock:
+      properties:
+        url:
+          type: string
+        hash:
+          type: string
+        embed:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        image:
+          type: string
+        title:
+          type: string
+        service:
+          type: string
+        site_name:
+          type: string
+        description:
+          type: string
+      required:
+      - url
+      - hash
+      - embed
+      - width
+      - height
+      - image
+      - title
+      - service
+      - site_name
+      - description
+      additionalProperties: false
+      type: object
+    IArticlePayloadBlock:
+      properties:
+        id:
+          type: string
+        data:
+          anyOf:
+          - $ref: '#/components/schemas/IArticleTextBlock'
+          - $ref: '#/components/schemas/IArticleImageBlock'
+          - $ref: '#/components/schemas/IArticleHeaderBlock'
+          - $ref: '#/components/schemas/IArticleQuoteBlock'
+          - $ref: '#/components/schemas/IArticleListBlock'
+          - $ref: '#/components/schemas/IArticleEmbedBlock'
+          - additionalProperties: false
+            type: object
+        name:
+          type: string
+        type:
+          type: string
+      required:
+      - id
+      - data
+      - name
+      - type
+      additionalProperties: false
+      type: object
+    IArticle:
+      properties:
+        id:
+          type: integer
+        channel:
+          $ref: '#/components/schemas/IChannel'
+        author:
+          anyOf:
+          - $ref: '#/components/schemas/IProfile'
+          - nullable: true
+        payload:
+          properties:
+            time:
+              type: integer
+            blocks:
+              items:
+                $ref: '#/components/schemas/IArticlePayloadBlock'
+              type: array
+          required:
+          - time
+          - blocks
+          additionalProperties: false
+          type: object
+        vote:
+          type: integer
+        repost_article:
+          $ref: '#/components/schemas/IArticle'
+        comment_count:
+          type: integer
+        repost_count:
+          type: integer
+        vote_count:
+          type: integer
+        creation_date:
+          type: integer
+        last_update_date:
+          type: integer
+        is_deleted:
+          type: boolean
+        under_moderation_reason:
+          nullable: true
+          type: string
+        is_under_moderation:
+          type: boolean
+        contains_repost_article:
+          type: boolean
+      required:
+      - id
+      - channel
+      - author
+      - payload
+      - vote
+      - repost_article
+      - comment_count
+      - repost_count
+      - vote_count
+      - creation_date
+      - last_update_date
+      - is_deleted
+      - under_moderation_reason
+      - is_under_moderation
+      - contains_repost_article
+      additionalProperties: false
+      type: object
+    IChannelBlockInfo:
+      properties:
+        '"@id"':
+          type: integer
+        reason:
+          nullable: true
+          type: string
+        added_date:
+          type: integer
+        expire_date:
+          nullable: true
+          type: integer
+        is_reason_showing_enabled:
+          type: boolean
+        is_perm_blocked:
+          type: boolean
+      required:
+      - '"@id"'
+      - reason
+      - added_date
+      - expire_date
+      - is_reason_showing_enabled
+      - is_perm_blocked
+      additionalProperties: false
+      type: object
+    IArticleComment:
+      properties:
+        article:
+          $ref: '#/components/schemas/IArticle'
+      required:
+      - article
+      additionalProperties: false
+      type: object
+    IFeedSearchResponse:
+      properties:
+        articles:
+          $ref: '#/components/responses/ISearchArticlesPagedResponse'
+        channels:
+          $ref: '#/components/responses/ISearchChannelsPagedResponse'
+        blogs:
+          $ref: '#/components/responses/ISearchChannelsPagedResponse'
+        tags:
+          allOf:
+          - $ref: '#/components/schemas/IPagedResponseBase'
+          - type: object
+            properties:
+              content:
+                type: array
+                items:
+                  type: string
+      required:
+      - articles
+      - channels
+      - tags
+      - blogs
+      additionalProperties: false
+      type: object
+    ICollection:
+      properties:
+        '''@id''':
+          type: integer
+        id:
+          type: integer
+        creator:
+          $ref: '#/components/schemas/IProfile'
+        title:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        creation_date:
+          type: integer
+        last_update_date:
+          type: integer
+        comment_count:
+          type: integer
+        favorites_count:
+          type: integer
+        is_private:
+          type: boolean
+        is_deleted:
+          type: boolean
+        is_favorite:
+          type: boolean
+        releases:
+          items:
+            $ref: '#/components/schemas/IRelease'
+          type: array
+      required:
+      - '''@id'''
+      - id
+      - creator
+      - title
+      - description
+      - image
+      - creation_date
+      - last_update_date
+      - comment_count
+      - favorites_count
+      - is_private
+      - is_deleted
+      - is_favorite
+      - releases
+      additionalProperties: false
+      type: object
+    ICollectionComment:
+      allOf:
+      - $ref: '#/components/schemas/IBaseComment'
+      - type: object
+        properties:
+          collection:
+            $ref: '#/components/schemas/ICollection'
+      required:
+      - collection
+      additionalProperties: false
+      type: object
+    ICollectionCompact:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        image:
+          type: string
+    ICollectionCompactComment:
+      allOf:
+      - $ref: '#/components/schemas/IBaseCompactComment'
+      - type: object
+        properties:
+          collection:
+            $ref: '#/components/schemas/ICollectionCompact'
+    IProfileToken:
+      properties:
+        id:
+          type: string
+        token:
+          type: string
+      required:
+      - id
+      - token
+      additionalProperties: false
+      type: object
+    IProfile:
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        avatar:
+          type: string
+        status:
+          type: string
+        sponsorshipExpires:
+          type: integer
+        history:
+          items:
+            $ref: '#/components/schemas/IRelease'
+          type: array
+        votes:
+          items:
+            $ref: '#/components/schemas/IVoteRelease'
+          type: array
+        last_activity_time:
+          type: integer
+        register_date:
+          type: integer
+        vk_page:
+          type: string
+        tg_page:
+          type: string
+        inst_page:
+          type: string
+        tt_page:
+          type: string
+        discord_page:
+          type: string
+        ban_expires:
+          type: integer
+        ban_reason:
+          type: string
+        ban_note:
+          nullable: true
+          type: string
+        privilege_level:
+          type: integer
+        watching_count:
+          type: integer
+        plan_count:
+          type: integer
+        completed_count:
+          type: integer
+        hold_on_count:
+          type: integer
+        dropped_count:
+          type: integer
+        favorite_count:
+          type: integer
+        comment_count:
+          type: integer
+        collection_count:
+          type: integer
+        video_count:
+          type: integer
+        friend_count:
+          type: integer
+        watched_episode_count:
+          type: integer
+        watched_time:
+          type: integer
+        is_private:
+          type: boolean
+        is_sponsor:
+          type: boolean
+        is_banned:
+          type: boolean
+        is_perm_banned:
+          type: boolean
+        is_bookmarks_transferred:
+          type: boolean
+        is_sponsor_transferred:
+          type: boolean
+        is_vk_bound:
+          type: boolean
+        is_google_bound:
+          type: boolean
+        is_release_type_notifications_enabled:
+          type: boolean
+        is_episode_notifications_enabled:
+          type: boolean
+        is_first_episode_notification_enabled:
+          type: boolean
+        is_related_release_notifications_enabled:
+          type: boolean
+        is_report_process_notifications_enabled:
+          type: boolean
+        is_comment_notifications_enabled:
+          type: boolean
+        is_my_collection_comment_notifications_enabled:
+          type: boolean
+        is_verified:
+          type: boolean
+        watch_dynamics:
+          items:
+            $ref: '#/components/schemas/IWatchDynamics'
+          type: array
+        friend_status:
+          type: integer
+        rating_score:
+          type: integer
+        is_blocked:
+          type: boolean
+        is_me_blocked:
+          type: boolean
+        is_stats_hidden:
+          type: boolean
+        is_counts_hidden:
+          type: boolean
+        is_social_hidden:
+          type: boolean
+        is_friend_requests_disallowed:
+          type: boolean
+        is_online:
+          type: boolean
+        roles:
+          items:
+            $ref: '#/components/schemas/IRole'
+          type: array
+        badge:
+          anyOf:
+          - $ref: '#/components/schemas/IBadge'
+          - nullable: true
+        preferred_genres:
+          items:
+            $ref: '#/components/schemas/IPreferredType'
+          type: array
+        preferred_audiences:
+          items:
+            $ref: '#/components/schemas/IPreferredType'
+          type: array
+        preferred_themes:
+          items:
+            $ref: '#/components/schemas/IPreferredType'
+          type: array
+        theme_enabled:
+          type: boolean
+        theme_gradient_start_color:
+          nullable: true
+          type: string
+        theme_gradient_end_color:
+          nullable: true
+          type: string
+        theme_gradient_angle:
+          nullable: true
+          type: string
+        theme_icon_res_name:
+          nullable: true
+          type: string
+        theme_icon_url:
+          nullable: true
+          type: string
+        theme_icon_color:
+          nullable: true
+          type: string
+        theme_icon_alpha:
+          type: integer
+        theme_icon_destiny:
+          nullable: true
+          type: string
+        theme_icon_size:
+          nullable: true
+          type: string
+        theme_animation_enabled:
+          type: boolean
+        theme_animation_speed:
+          nullable: true
+          type: string
+        theme_background_url:
+          nullable: true
+          type: string
+        theme_background_mode:
+          nullable: true
+          type: string
+        theme_background_alpha:
+          nullable: true
+          type: integer
+      required:
+      - id
+      - login
+      - avatar
+      - status
+      - sponsorshipExpires
+      - history
+      - votes
+      - last_activity_time
+      - register_date
+      - vk_page
+      - tg_page
+      - inst_page
+      - tt_page
+      - discord_page
+      - ban_expires
+      - ban_reason
+      - ban_note
+      - privilege_level
+      - watching_count
+      - plan_count
+      - completed_count
+      - hold_on_count
+      - dropped_count
+      - favorite_count
+      - comment_count
+      - collection_count
+      - video_count
+      - friend_count
+      - watched_episode_count
+      - watched_time
+      - is_private
+      - is_sponsor
+      - is_banned
+      - is_perm_banned
+      - is_bookmarks_transferred
+      - is_sponsor_transferred
+      - is_vk_bound
+      - is_google_bound
+      - is_release_type_notifications_enabled
+      - is_episode_notifications_enabled
+      - is_first_episode_notification_enabled
+      - is_related_release_notifications_enabled
+      - is_report_process_notifications_enabled
+      - is_comment_notifications_enabled
+      - is_my_collection_comment_notifications_enabled
+      - is_verified
+      - watch_dynamics
+      - friend_status
+      - rating_score
+      - is_blocked
+      - is_me_blocked
+      - is_stats_hidden
+      - is_counts_hidden
+      - is_social_hidden
+      - is_friend_requests_disallowed
+      - is_online
+      - roles
+      - badge
+      - preferred_genres
+      - preferred_audiences
+      - preferred_themes
+      - theme_enabled
+      - theme_gradient_start_color
+      - theme_gradient_end_color
+      - theme_gradient_angle
+      - theme_icon_res_name
+      - theme_icon_url
+      - theme_icon_color
+      - theme_icon_alpha
+      - theme_icon_destiny
+      - theme_icon_size
+      - theme_animation_enabled
+      - theme_animation_speed
+      - theme_background_url
+      - theme_background_mode
+      - theme_background_alpha
+      additionalProperties: false
+      type: object
+    IPreferredType:
+      properties:
+        name:
+          type: string
+        percentage:
+          type: integer
+      required:
+      - name
+      - percentage
+      additionalProperties: false
+      type: object
+    IWatchDynamics:
+      properties:
+        id:
+          type: integer
+        day:
+          type: integer
+        count:
+          type: integer
+        timestamp:
+          type: integer
+      required:
+      - id
+      - day
+      - count
+      - timestamp
+      additionalProperties: false
+      type: object
+    IRole:
+      properties:
+        color:
+          type: string
+        name:
+          type: string
+      required:
+      - color
+      - name
+      additionalProperties: false
+      type: object
+    IProfileShort:
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        avatar:
+          type: string
+        ban_expires:
+          type: integer
+        ban_reason:
+          type: string
+        privilege_level:
+          type: integer
+        badge_id:
+          nullable: true
+          type: integer
+        badge_name:
+          nullable: true
+          type: string
+        badge_type:
+          nullable: true
+          type: integer
+        badge_url:
+          nullable: true
+          type: string
+        is_banned:
+          type: boolean
+        is_sponsor:
+          type: boolean
+        is_verified:
+          type: boolean
+        is_online:
+          type: boolean
+        friend_status:
+          type: integer
+        friend_count:
+          type: integer
+      required:
+      - id
+      - login
+      - avatar
+      - ban_expires
+      - ban_reason
+      - privilege_level
+      - badge_id
+      - badge_name
+      - badge_type
+      - badge_url
+      - is_banned
+      - is_sponsor
+      - is_verified
+      - is_online
+      - friend_status
+      - friend_count
+      additionalProperties: false
+      type: object
+    IProfileChannel:
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        avatar:
+          type: string
+        permission_creation_date:
+          type: integer
+        permission:
+          type: integer
+        badge_name:
+          nullable: true
+          type: string
+        badge_type:
+          nullable: true
+          type: integer
+        badge_url:
+          nullable: true
+          type: string
+        is_blocked:
+          type: boolean
+        is_sponsor:
+          type: boolean
+        is_verified:
+          type: boolean
+        is_perm_blocked:
+          type: boolean
+        channel_id:
+          type: integer
+        block_reason:
+          nullable: true
+          type: string
+        block_expire_date:
+          nullable: true
+          type: integer
+      required:
+      - id
+      - login
+      - avatar
+      - permission_creation_date
+      - permission
+      - badge_name
+      - badge_type
+      - badge_url
+      - is_blocked
+      - is_sponsor
+      - is_verified
+      - is_perm_blocked
+      - channel_id
+      - block_reason
+      - block_expire_date
+      additionalProperties: false
+      type: object
+    IBadge:
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: integer
+        image_url:
+          type: string
+        timestamp:
+          type: integer
+      required:
+      - id
+      - name
+      - type
+      - image_url
+      - timestamp
+      additionalProperties: false
+      type: object
+    ISocialResponse:
+      properties:
+        vk_page:
+          type: string
+        tg_page:
+          type: string
+        inst_page:
+          type: string
+        tt_page:
+          type: string
+        discord_page:
+          type: string
+      required:
+      - vk_page
+      - tg_page
+      - inst_page
+      - tt_page
+      - discord_page
+      additionalProperties: false
+      type: object
+    IProfileCompact:
+      type: object
+      properties:
+        id:
+          type: integer
+        login:
+          type: string
+        avatar:
+          type: string
+    IBaseNotification:
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        profile:
+          $ref: '#/components/schemas/IProfile'
+        timestamp:
+          type: integer
+        is_pushed:
+          type: boolean
+        is_new:
+          type: boolean
+      required:
+      - id
+      - type
+      - profile
+      - timestamp
+      - is_pushed
+      - is_new
+      additionalProperties: false
+      type: object
+    IFriendNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - properties:
+          status:
+            type: string
+          by_profile:
+            $ref: '#/components/schemas/IProfile'
+        required:
+        - status
+        - by_profile
+        additionalProperties: false
+        type: object
+    IEpisodeNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - properties:
+          episode:
+            type: object
+            properties:
+              name:
+                type: string
+              position:
+                type: integer
+              release:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  title_ru:
+                    type: string
+                  image:
+                    type: string
+              source:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  type:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+        required:
+        - episode
+        additionalProperties: false
+        type: object
+    IArticleNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - properties:
+          '''@id''':
+            type: integer
+          article:
+            type: integer
+        required:
+        - '''@id'''
+        - article
+        additionalProperties: false
+        type: object
+    IRelatedReleaseNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - properties:
+          '''@id''':
+            type: integer
+          release:
+            anyOf:
+            - type: integer
+        required:
+        - '''@id'''
+        - release
+        additionalProperties: false
+        type: object
+    IReleaseCommentNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - type: object
+        properties:
+          parentComment:
+            $ref: '#/components/schemas/IReleaseCompactComment'
+          comment:
+            $ref: '#/components/schemas/IReleaseCompactComment'
+    ICollectionCommentNotification:
+      allOf:
+      - $ref: '#/components/schemas/IBaseNotification'
+      - type: object
+        properties:
+          parentComment:
+            $ref: '#/components/schemas/ICollectionCompactComment'
+          comment:
+            $ref: '#/components/schemas/ICollectionCompactComment'
+    IReleaseCategory:
+      properties:
+        id: {}
+        name:
+          type: string
+      required:
+      - id
+      - name
+      additionalProperties: false
+      type: object
+    IReleaseStatus:
+      properties:
+        id: {}
+        name:
+          type: string
+      required:
+      - id
+      - name
+      additionalProperties: false
+      type: object
+    IRelated:
+      properties:
+        description:
+          type: string
+        id:
+          type: integer
+        image:
+          type: string
+        images:
+          items:
+            type: string
+          type: array
+        name:
+          type: string
+        name_ru:
+          type: string
+        release_count:
+          type: integer
+      required:
+      - description
+      - id
+      - image
+      - images
+      - name
+      - name_ru
+      - release_count
+      additionalProperties: false
+      type: object
+    IEpisodeLastUpdate:
+      properties:
+        lastEpisodeTypeUpdateName:
+          type: string
+        last_episode_source_update_id:
+          type: integer
+        last_episode_source_update_name:
+          type: string
+        last_episode_type_update_id:
+          type: integer
+        last_episode_update_date:
+          type: integer
+        last_episode_update_name:
+          type: string
+      required:
+      - lastEpisodeTypeUpdateName
+      - last_episode_source_update_id
+      - last_episode_source_update_name
+      - last_episode_type_update_id
+      - last_episode_update_date
+      - last_episode_update_name
+      additionalProperties: false
+      type: object
+    IRelease:
+      properties:
+        '''@id''':
+          type: integer
+        id:
+          type: integer
+        poster:
+          type: string
+        image:
+          type: string
+        year:
+          type: string
+        genres:
+          type: string
+        country:
+          type: string
+        director:
+          type: string
+        author:
+          type: string
+        translators:
+          type: string
+        studio:
+          type: string
+        description:
+          type: string
+        note:
+          nullable: true
+          type: string
+        related:
+          $ref: '#/components/schemas/IRelated'
+        category:
+          $ref: '#/components/schemas/IReleaseCategory'
+        rating:
+          type: integer
+        grade:
+          type: integer
+        status:
+          $ref: '#/components/schemas/IReleaseStatus'
+        duration:
+          type: integer
+        season:
+          type: integer
+        broadcast:
+          type: integer
+        screenshots:
+          items:
+            type: string
+          type: array
+        comments:
+          items:
+            $ref: '#/components/schemas/ICommentRelease'
+          type: array
+        title_original:
+          type: string
+        title_ru:
+          type: string
+        title_alt:
+          type: string
+        episodes_released:
+          type: integer
+        episodes_total:
+          type: integer
+        release_date:
+          type: string
+        vote_1_count:
+          type: integer
+        vote_2_count:
+          type: integer
+        vote_3_count:
+          type: integer
+        vote_4_count:
+          type: integer
+        vote_5_count:
+          type: integer
+        vote_count:
+          type: integer
+        creation_date:
+          type: integer
+        last_update_date:
+          type: integer
+        aired_on_date:
+          type: integer
+        favorites_count:
+          type: integer
+        watching_count:
+          type: integer
+        plan_count:
+          type: integer
+        completed_count:
+          type: integer
+        hold_on_count:
+          type: integer
+        dropped_count:
+          type: integer
+        is_adult:
+          type: boolean
+        is_play_disabled:
+          type: boolean
+        is_tpp_disabled:
+          type: boolean
+        can_video_appeal:
+          type: boolean
+        can_torlook_search:
+          type: boolean
+        is_deleted:
+          type: boolean
+        age_rating:
+          type: integer
+        your_vote:
+          type: integer
+        related_count:
+          type: integer
+        comment_count:
+          type: integer
+        comments_count:
+          type: integer
+        collection_count:
+          type: integer
+        profile_list_status:
+          type: integer
+        status_id:
+          type: integer
+        last_view_timestamp:
+          type: integer
+        last_view_episode:
+          $ref: '#/components/schemas/IEpisode'
+        is_viewed:
+          type: boolean
+        is_favorite:
+          type: boolean
+        is_view_blocked:
+          type: boolean
+        screenshot_images:
+          items:
+            type: string
+          type: array
+        related_releases:
+          items:
+            $ref: '#/components/schemas/IRelease'
+          type: array
+        recommended_releases:
+          items:
+            $ref: '#/components/schemas/IRelease'
+          type: array
+        episode_last_update:
+          $ref: '#/components/schemas/IEpisodeLastUpdate'
+        comment_per_day_count:
+          type: integer
+        video_banners:
+          items:
+            $ref: '#/components/schemas/IVideoBanners'
+          type: array
+        profile_release_type_notification_preference_count:
+          type: integer
+        is_release_type_notifications_enabled:
+          type: boolean
+      required:
+      - '''@id'''
+      - id
+      - poster
+      - image
+      - year
+      - genres
+      - country
+      - director
+      - author
+      - translators
+      - studio
+      - description
+      - note
+      - related
+      - category
+      - rating
+      - grade
+      - status
+      - duration
+      - season
+      - broadcast
+      - screenshots
+      - comments
+      - title_original
+      - title_ru
+      - title_alt
+      - episodes_released
+      - episodes_total
+      - release_date
+      - vote_1_count
+      - vote_2_count
+      - vote_3_count
+      - vote_4_count
+      - vote_5_count
+      - vote_count
+      - creation_date
+      - last_update_date
+      - aired_on_date
+      - favorites_count
+      - watching_count
+      - plan_count
+      - completed_count
+      - hold_on_count
+      - dropped_count
+      - is_adult
+      - is_play_disabled
+      - is_tpp_disabled
+      - can_video_appeal
+      - can_torlook_search
+      - is_deleted
+      - age_rating
+      - your_vote
+      - related_count
+      - comment_count
+      - comments_count
+      - collection_count
+      - profile_list_status
+      - status_id
+      - last_view_timestamp
+      - last_view_episode
+      - is_viewed
+      - is_favorite
+      - is_view_blocked
+      - screenshot_images
+      - related_releases
+      - recommended_releases
+      - episode_last_update
+      - comment_per_day_count
+      - video_banners
+      - profile_release_type_notification_preference_count
+      - is_release_type_notifications_enabled
+      additionalProperties: false
+      type: object
+    IVoteRelease:
+      properties:
+        translation:
+          type: string
+        id:
+          type: integer
+        broadcast:
+          type: integer
+        year:
+          type: string
+        country:
+          type: string
+        duration:
+          type: integer
+        description:
+          type: string
+        image:
+          type: string
+        genres:
+          type: string
+        studio:
+          type: string
+        season:
+          type: integer
+        note:
+          nullable: true
+          type: string
+        author:
+          type: string
+        director:
+          type: string
+        rating:
+          type: integer
+        grade:
+          type: integer
+        status:
+          type: integer
+        poster:
+          type: string
+        title_original:
+          type: string
+        title_ru:
+          type: string
+        favorites_count:
+          type: integer
+        creation_date:
+          type: integer
+        last_update_date:
+          type: integer
+        is_deleted:
+          type: boolean
+        is_favorite:
+          type: boolean
+        is_viewed:
+          type: boolean
+        is_play_disabled:
+          type: boolean
+        is_adult:
+          type: boolean
+        my_vote:
+          type: integer
+        voted_at:
+          type: integer
+        episodes_released:
+          type: integer
+        episodes_total:
+          type: integer
+        release_date:
+          type: string
+        age_rating:
+          type: integer
+        profile_list_status:
+          type: integer
+      required:
+      - translation
+      - id
+      - broadcast
+      - year
+      - country
+      - duration
+      - description
+      - image
+      - genres
+      - studio
+      - season
+      - note
+      - author
+      - director
+      - rating
+      - grade
+      - status
+      - poster
+      - title_original
+      - title_ru
+      - favorites_count
+      - creation_date
+      - last_update_date
+      - is_deleted
+      - is_favorite
+      - is_viewed
+      - is_play_disabled
+      - is_adult
+      - my_vote
+      - voted_at
+      - episodes_released
+      - episodes_total
+      - release_date
+      - age_rating
+      - profile_list_status
+      additionalProperties: false
+      type: object
+    IVideo:
+      properties:
+        id:
+          type: integer
+        release:
+          anyOf:
+          - $ref: '#/components/schemas/IRelease'
+          - type: integer
+        profile:
+          $ref: '#/components/schemas/IProfile'
+        category:
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          required:
+          - id
+          - name
+          additionalProperties: false
+          type: object
+        hosting:
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            icon:
+              type: string
+          required:
+          - id
+          - name
+          - icon
+          additionalProperties: false
+          type: object
+        title:
+          type: string
+        image:
+          type: string
+        url:
+          type: string
+        timestamp:
+          type: integer
+        player_url:
+          type: string
+        is_favorite:
+          type: boolean
+        favorites_count:
+          type: integer
+      required:
+      - id
+      - release
+      - profile
+      - category
+      - hosting
+      - title
+      - image
+      - url
+      - timestamp
+      - player_url
+      - is_favorite
+      - favorites_count
+      additionalProperties: false
+      type: object
+    IVideoResponse:
+      properties:
+        code:
+          $ref: '#/components/schemas/IReleaseVideoResult'
+        release:
+          $ref: '#/components/schemas/IRelease'
+        blocks:
+          items:
+            $ref: '#/components/schemas/IVideo'
+          type: array
+        streaming_platforms:
+          items:
+            $ref: '#/components/schemas/IVideoStreamingPlatform'
+          type: array
+        last_videos:
+          items:
+            $ref: '#/components/schemas/IVideo'
+          type: array
+        can_appeal:
+          type: boolean
+      required:
+      - code
+      - release
+      - blocks
+      - streaming_platforms
+      - last_videos
+      - can_appeal
+      additionalProperties: false
+      type: object
+    IVideoBanners:
+      properties:
+        name:
+          type: string
+        image:
+          type: string
+        value:
+          type: string
+        action_id:
+          type: integer
+        is_new:
+          type: boolean
+      required:
+      - name
+      - image
+      - value
+      - action_id
+      - is_new
+      additionalProperties: false
+      type: object
+    IVideoStreamingPlatform:
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+        url:
+          type: string
+        position:
+          type: integer
+      required:
+      - id
+      - name
+      - icon
+      - url
+      - position
+      additionalProperties: false
+      type: object
+    ICommentRelease:
+      allOf:
+      - $ref: '#/components/schemas/IBaseComment'
+      - type: object
+        properties:
+          release:
+            $ref: '#/components/schemas/IRelease'
+    IDubber:
+      properties:
+        '''@id''':
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+        workers:
+          type: string
+        is_sub:
+          type: boolean
+        episode_count:
+          type: integer
+        view_count:
+          type: integer
+        pinned:
+          type: boolean
+      required:
+      - '''@id'''
+      - id
+      - name
+      - icon
+      - workers
+      - is_sub
+      - episode_count
+      - view_count
+      - pinned
+      additionalProperties: false
+      type: object
+    IDubbersResponse:
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        types:
+          items:
+            $ref: '#/components/schemas/IDubber'
+          type: array
+      required:
+      - types
+      additionalProperties: false
+      type: object
+    ISource:
+      properties:
+        '''@id''':
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          anyOf:
+          - $ref: '#/components/schemas/IDubber'
+          - type: integer
+        episode_count:
+          type: integer
+      required:
+      - '''@id'''
+      - id
+      - name
+      - type
+      - episode_count
+      additionalProperties: false
+      type: object
+    ISourcesResponse:
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        sources:
+          items:
+            $ref: '#/components/schemas/ISource'
+          type: array
+      required:
+      - sources
+      additionalProperties: false
+      type: object
+    IEpisode:
+      properties:
+        '''@id''':
+          type: integer
+        position:
+          type: integer
+        release:
+          anyOf:
+          - $ref: '#/components/schemas/IRelease'
+          - type: integer
+        source:
+          anyOf:
+          - $ref: '#/components/schemas/ISource'
+          - type: integer
+        name:
+          type: string
+        url:
+          type: string
+        iframe:
+          type: boolean
+        addedDate:
+          type: integer
+        is_filter:
+          type: boolean
+        is_watched:
+          type: boolean
+      required:
+      - '''@id'''
+      - position
+      - release
+      - source
+      - name
+      - url
+      - iframe
+      - addedDate
+      - is_filter
+      - is_watched
+      additionalProperties: false
+      type: object
+    IEpisodesResponse:
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        episodes:
+          items:
+            $ref: '#/components/schemas/IEpisode'
+          type: array
+      required:
+      - episodes
+      additionalProperties: false
+      type: object
+    IEpisodeResponse:
+      properties:
+        code:
+          $ref: '#/components/schemas/DefaultResultEnum'
+        episode:
+          $ref: '#/components/schemas/IEpisode'
+      required:
+      - episode
+      additionalProperties: false
+      type: object
+    IInterestingRelease:
+      properties:
+        '''@id''':
+          type: integer
+        id:
+          type: integer
+        title:
+          type: string
+        image:
+          type: string
+        description:
+          type: string
+        type:
+          type: integer
+        action:
+          type: string
+        is_hidden:
+          type: boolean
+      required:
+      - '''@id'''
+      - id
+      - title
+      - image
+      - description
+      - type
+      - action
+      - is_hidden
+      additionalProperties: false
+      type: object
+    ILastEpisodeUpdate:
+      properties:
+        last_episode_update_date:
+          type: integer
+        last_episode_update_name:
+          type: string
+        last_episode_source_update_id:
+          type: integer
+        last_episode_source_update_name:
+          type: string
+        last_episode_type_update_id:
+          type: integer
+        lastEpisodeTypeUpdateName:
+          type: string
+      required:
+      - last_episode_update_date
+      - last_episode_update_name
+      - last_episode_source_update_id
+      - last_episode_source_update_name
+      - last_episode_type_update_id
+      - lastEpisodeTypeUpdateName
+      additionalProperties: false
+      type: object
+    IExportRelease:
+      properties:
+        id:
+          type: integer
+        title_alt:
+          type: string
+        title_ru:
+          type: string
+        title_original:
+          type: string
+        your_vote:
+          nullable: true
+          type: integer
+        profile_list_status:
+          type: integer
+        is_favorite:
+          type: boolean
+      required:
+      - id
+      - title_alt
+      - title_ru
+      - title_original
+      - your_vote
+      - profile_list_status
+      - is_favorite
+      additionalProperties: false
+      type: object
+    ICompactRelease:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        image:
+          type: string
+    IReleaseCompactComment:
+      allOf:
+      - $ref: '#/components/schemas/IBaseCompactComment'
+      - type: object
+        properties:
+          release:
+            $ref: '#/components/schemas/ICompactRelease'
+    FCountry:
+      enum:
+      - null
+      - "\u042F\u043F\u043E\u043D\u0438\u044F"
+      - "\u041A\u0438\u0442\u0430\u0439"
+      - "\u042E\u0436\u043D\u0430\u044F \u041A\u043E\u0440\u0435\u044F"
+      x-enumNames:
+      - Any
+      - Japan
+      - China
+      - South Korea
+      title: Country Filter
+    FCategoryId:
+      enum:
+      - null
+      - 1
+      - 2
+      - 3
+      - 4
+      x-enumNames:
+      - Any
+      - Series
+      - Film
+      - OVA
+      - Dorama
+      title: Category ID Filter
+    FGenres:
+      anyOf:
+      - enum:
+        - "\u0430\u0432\u0430\u043D\u0433\u0430\u0440\u0434"
+        - "\u0433\u0443\u0440\u043C\u0430\u043D"
+        - "\u0434\u0440\u0430\u043C\u0430"
+        - "\u043A\u043E\u043C\u0435\u0434\u0438\u044F"
+        - "\u043F\u043E\u0432\u0441\u0435\u0434\u043D\u0435\u0432\u043D\u043E\u0441\u0442\u044C"
+        - "\u043F\u0440\u0438\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u044F"
+        - "\u0440\u043E\u043C\u0430\u043D\u0442\u0438\u043A\u0430"
+        - "\u0441\u0432\u0435\u0440\u0445\u044A\u0435\u0441\u0442\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u043E\u0435"
+        - "\u0441\u043F\u043E\u0440\u0442"
+        - "\u0442\u0430\u0439\u043D\u0430"
+        - "\u0442\u0440\u0438\u043B\u043B\u0435\u0440"
+        - "\u0443\u0436\u0430\u0441\u044B"
+        - "\u0444\u0430\u043D\u0442\u0430\u0441\u0442\u0438\u043A\u0430"
+        - "\u0444\u044D\u043D\u0442\u0435\u0437\u0438"
+        - "\u044D\u043A\u0448\u0435\u043D"
+        - "\u044D\u0440\u043E\u0442\u0438\u043A\u0430"
+        - "\u044D\u0442\u0442\u0438"
+        title: Uncategorized
+      - enum:
+        - "\u0434\u0435\u0442\u0441\u043A\u043E\u0435"
+        - "\u0434\u0437\u0451\u0441\u0435\u0439"
+        - "\u0441\u044D\u0439\u043D\u044D\u043D"
+        - "\u0441\u0451\u0434\u0437\u0451"
+        - "\u0441\u0451\u0434\u0437\u0451-\u0430\u0439"
+        - "\u0441\u0451\u043D\u0435\u043D"
+        - "\u0441\u0451\u043D\u0435\u043D-\u0430\u0439"
+        title: Audience
+      - enum:
+        - CGDCT
+        - "\u0430\u043D\u0442\u0440\u043E\u043F\u043E\u043C\u043E\u0440\u0444\u0438\u0437\u043C"
+        - "\u0431\u043E\u0435\u0432\u044B\u0435 \u0438\u0441\u043A\u0443\u0441\u0441\u0442\u0432\u0430"
+        - "\u0432\u0430\u043C\u043F\u0438\u0440\u044B"
+        - "\u0432\u0437\u0440\u043E\u0441\u043B\u044B\u0435 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u0436\u0438"
+        - "\u0432\u0438\u0434\u0435\u043E\u0438\u0433\u0440\u044B"
+        - "\u0432\u043E\u0435\u043D\u043D\u043E\u0435"
+        - "\u0432\u044B\u0436\u0438\u0432\u0430\u043D\u0438\u0435"
+        - "\u0433\u0430\u0440\u0435\u043C"
+        - "\u0433\u043E\u043D\u043A\u0438"
+        - "\u0433\u043E\u0440\u043E\u0434\u0441\u043A\u043E\u0435 \u0444\u044D\u043D\u0442\u0435\u0437\u0438"
+        - "\u0433\u044D\u0433-\u044E\u043C\u043E\u0440"
+        - "\u0434\u0435\u0442\u0435\u043A\u0442\u0438\u0432"
+        - "\u0436\u0435\u0441\u0442\u043E\u043A\u043E\u0441\u0442\u044C"
+        - "\u0437\u0430\u0431\u043E\u0442\u0430 \u043E \u0434\u0435\u0442\u044F\u0445"
+        - "\u0437\u043B\u043E\u0434\u0435\u0439\u043A\u0430"
+        - "\u0438\u0433\u0440\u0430 \u0441 \u0432\u044B\u0441\u043E\u043A\u0438\u043C\u0438
+          \u0441\u0442\u0430\u0432\u043A\u0430\u043C\u0438"
+        - "\u0438\u0434\u043E\u043B\u044B (\u0436\u0435\u043D.)"
+        - "\u0438\u0434\u043E\u043B\u044B (\u043C\u0443\u0436.)"
+        - "\u0438\u0437\u043E\u0431\u0440\u0430\u0437\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435
+          \u0438\u0441\u043A\u0443\u0441\u0441\u0442\u0432\u043E"
+        - "\u0438\u0441\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u0441\u043A\u043E\u0435
+          \u0438\u0441\u043A\u0443\u0441\u0441\u0442\u0432\u043E"
+        - "\u0438\u0441\u0442\u043E\u0440\u0438\u0447\u0435\u0441\u043A\u0438\u0439"
+        - "\u0438\u0441\u044D\u043A\u0430\u0439"
+        - "\u0438\u044F\u0441\u0438\u043A\u044D\u0439"
+        - "\u043A\u043E\u043C\u0430\u043D\u0434\u043D\u044B\u0439 \u0441\u043F\u043E\u0440\u0442"
+        - "\u043A\u043E\u0441\u043C\u043E\u0441"
+        - "\u043A\u0440\u043E\u0441\u0441\u0434\u0440\u0435\u0441\u0441\u0438\u043D\u0433"
+        - "\u043A\u0443\u043B\u044C\u0442\u0443\u0440\u0430 \u043E\u0442\u0430\u043A\u0443"
+        - "\u043B\u044E\u0431\u043E\u0432\u043D\u044B\u0439 \u043C\u043D\u043E\u0433\u043E\u0443\u0433\u043E\u043B\u044C\u043D\u0438\u043A"
+        - "\u043C\u0430\u0433\u0438\u0447\u0435\u0441\u043A\u0430\u044F \u0441\u043C\u0435\u043D\u0430
+          \u043F\u043E\u043B\u0430"
+        - "\u043C\u0430\u0445\u043E-\u0441\u0451\u0434\u0437\u0451"
+        - "\u043C\u0435\u0434\u0438\u0446\u0438\u043D\u0430"
+        - "\u043C\u0435\u0445\u0430"
+        - "\u043C\u0438\u0444\u043E\u043B\u043E\u0433\u0438\u044F"
+        - "\u043C\u0443\u0437\u044B\u043A\u0430"
+        - "\u043E\u0431\u0440\u0430\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u043D\u043E\u0435"
+        - "\u043E\u0440\u0433\u0430\u043D\u0438\u0437\u043E\u0432\u0430\u043D\u043D\u0430\u044F
+          \u043F\u0440\u0435\u0441\u0442\u0443\u043F\u043D\u043E\u0441\u0442\u044C"
+        - "\u043F\u0430\u0440\u043E\u0434\u0438\u044F"
+        - "\u043F\u0438\u0442\u043E\u043C\u0446\u044B"
+        - "\u043F\u0441\u0438\u0445\u043E\u043B\u043E\u0433\u0438\u0447\u0435\u0441\u043A\u043E\u0435"
+        - "\u043F\u0443\u0442\u0435\u0448\u0435\u0441\u0442\u0432\u0438\u0435 \u0432\u043E
+          \u0432\u0440\u0435\u043C\u0435\u043D\u0438"
+        - "\u0440\u0430\u0431\u043E\u0442\u0430"
+        - "\u0440\u0435\u0432\u0435\u0440\u0441-\u0433\u0430\u0440\u0435\u043C"
+        - "\u0440\u0435\u0438\u043D\u043A\u0430\u0440\u043D\u0430\u0446\u0438\u044F"
+        - "\u0440\u043E\u043C\u0430\u043D\u0442\u0438\u0447\u0435\u0441\u043A\u0438\u0439
+          \u043F\u043E\u0434\u0442\u0435\u043A\u0441\u0442"
+        - "\u0441\u0430\u043C\u0443\u0440\u0430\u0438"
+        - "\u0441\u043F\u043E\u0440\u0442\u0438\u0432\u043D\u044B\u0435 \u0435\u0434\u0438\u043D\u043E\u0431\u043E\u0440\u0441\u0442\u0432\u0430"
+        - "\u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043A\u0438\u0435
+          \u0438\u0433\u0440\u044B"
+        - "\u0441\u0443\u043F\u0435\u0440 \u0441\u0438\u043B\u0430"
+        - "\u0443\u0434\u043E\u0441\u0442\u043E\u0435\u043D\u043E \u043D\u0430\u0433\u0440\u0430\u0434"
+        - "\u0445\u0443\u043B\u0438\u0433\u0430\u043D\u044B"
+        - "\u0448\u043A\u043E\u043B\u0430"
+        - "\u0448\u043E\u0443-\u0431\u0438\u0437\u043D\u0435\u0441"
+        title: Thematic
+    FProfileListExclusions:
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      x-enumNames:
+      - Favorites
+      - Watching
+      - PlanToWatch
+      - Completed
+      - OnHold
+      - Dropped
+      title: Profile List Exclusions
+    FStudio:
+      enum:
+      - null
+      - A-1 Pictures
+      - A.C.G.T
+      - ACTAS, Inc
+      - ACiD FiLM
+      - AIC A.S.T.A
+      - AIC PLUS
+      - AIC Spirits
+      - AIC
+      - Animac
+      - ANIMATE
+      - Aniplex
+      - ARMS
+      - Artland
+      - ARTMIC Studios
+      - Asahi Production
+      - Asia-Do
+      - ASHI
+      - Asread
+      - Asmik Ace
+      - Aubeck
+      - BM Entertainment
+      - Bandai Visua
+      - Barnum Studio
+      - Bee Train
+      - BeSTACK
+      - Blender Foundation
+      - Bones
+      - Brains Base
+      - Bridge
+      - Cinema Citrus
+      - Chaos Project
+      - Cherry Lips
+      - David Production
+      - Daume
+      - Doumu
+      - Dax International
+      - DLE INC
+      - Digital Frontier
+      - Digital Works
+      - Diomedea
+      - DIRECTIONS Inc
+      - Dogakobo
+      - Dofus
+      - Encourage Films
+      - Feel
+      - Fifth Avenue
+      - Five Ways
+      - Fuji TV
+      - Foursome
+      - GRAM Studio
+      - G&G Entertainment
+      - Gainax
+      - GANSIS
+      - Gathering
+      - Gonzino
+      - Gonzo
+      - GoHands
+      - Green Bunny
+      - Group TAC
+      - Hal Film Maker
+      - Hasbro Studios
+      - h.m.p
+      - Himajin
+      - Hoods Entertainment
+      - Idea Factory
+      - J.C.Staff
+      - KANSAI
+      - Kaname Production
+      - Kitty Films
+      - Knack
+      - Kokusai Eigasha
+      - "KSS (\u0441\u0442\u0443\u0434\u0438\u044F)"
+      - Kyoto Animation
+      - Lemon Heart
+      - LMD
+      - Madhouse Studios
+      - Magic Bus
+      - Manglobe Inc.
+      - Manpuku Jinja
+      - MAPPA
+      - Milky
+      - Minamimachi Bugyosho
+      - Media Blasters
+      - Mook Animation
+      - Moonrock
+      - MOVIC
+      - Mushi Productions
+      - Natural High
+      - Nippon Animation
+      - Nomad
+      - Lerche
+      - OB Planning
+      - Office AO
+      - Ordet
+      - Oriental Light and Magic
+      - OLM Inc.
+      - P.A. Works
+      - Palm Studio
+      - Pastel
+      - Phoenix Entertainment
+      - Picture Magic
+      - Pink
+      - Pink Pineapple
+      - Planet
+      - Plum
+      - PPM
+      - Primastea
+      - Production I.G
+      - Project No.9
+      - Radix
+      - Rikuentai
+      - Robot
+      - Satelight
+      - Seven
+      - Seven Arcs
+      - Shaft
+      - Silver Link
+      - Shinei Animation
+      - Shogakukan Music & Digital Entertainment
+      - Soft on Demand
+      - Starchild Records
+      - Studio 9 Maiami
+      - Studio Tulip
+      - "Studio 4\xB0C"
+      - Studio e.go!
+      - Studio A.P.P.P
+      - Studio Barcelona
+      - Studio Blanc
+      - Studio Comet
+      - Studio Deen
+      - Studio Fantasia
+      - Studio Flag
+      - Studio Gallop
+      - Studio Ghibli
+      - Studio Guts
+      - Studio Gokumi
+      - Studio Rikka
+      - Studio Hibari
+      - Studio Junio
+      - Studio Khara
+      - Studio Live
+      - Studio Matrix
+      - Studio Pierrot
+      - Studio Egg
+      - Sunrise
+      - Synergy SP
+      - Synergy Japan
+      - Tatsunoko Production
+      - Tele-Cartoon Japan
+      - Telecom Animation Film
+      - Tezuka Productions
+      - The Answer Studio
+      - TMS
+      - TNK
+      - Toei Animation
+      - Tokyo Kids
+      - TYO Animations
+      - Transarts
+      - Triangle Staff
+      - Trinet Entertainment
+      - Ufotable
+      - Vega Entertainment
+      - Victor Entertainment
+      - Viewworks
+      - White Fox
+      - Wonder Farm
+      - XEBEC-M2
+      - Xebec
+      - Yumeta Company
+      - Zexcs
+      - Zuiyo Eizo
+      - 8bit
+    FSource:
+      enum:
+      - null
+      - "\u041E\u0440\u0438\u0433\u0438\u043D\u0430\u043B"
+      - "\u041C\u0430\u043D\u0433\u0430"
+      - "\u0412\u0435\u0431-\u043C\u0430\u043D\u0433\u0430"
+      - "\u0415\u043D\u043A\u043E\u043C\u0430"
+      - "\u0420\u0430\u043D\u043E\u0431\u044D"
+      - "\u041D\u043E\u0432\u0435\u043B\u043B\u0430"
+      - "\u0412\u0435\u0431-\u043D\u043E\u0432\u0435\u043B\u043B\u0430"
+      - "\u0412\u0438\u0437\u0443\u0430\u043B\u044C\u043D\u0430\u044F \u043D\u043E\u0432\u0435\u043B\u043B\u0430"
+      - "\u0418\u0433\u0440\u0430"
+      - "\u041A\u0430\u0440\u0442\u043E\u0447\u043D\u0430\u044F \u0438\u0433\u0440\u0430"
+      - "\u041A\u043D\u0438\u0433\u0430"
+      - "\u041A\u043D\u0438\u0433\u0430 \u0441 \u043A\u0430\u0440\u0442\u0438\u043D\u043A\u0430\u043C\u0438"
+      - "\u041C\u0443\u0437\u044B\u043A\u0430"
+      - "\u0420\u0430\u0434\u0438\u043E"
+      - "\u0411\u043E\u043B\u0435\u0435 \u043E\u0434\u043D\u043E\u0433\u043E"
+      - "\u0414\u0440\u0443\u0433\u043E\u0435"
+    FYear:
+      type: integer
+      nullable: true
+      example: null
+      minimum: 1900
+      maximum: 2100
+    FSeasonId:
+      type: integer
+      nullable: true
+      example: null
+      enum:
+      - null
+      - 1
+      - 2
+      - 3
+      - 4
+      x-enumNames:
+      - Any
+      - Winter
+      - Spring
+      - Summer
+      - Fall
+    FEpisodeCount:
+      type: integer
+      nullable: true
+      example: null
+      minimum: 1
+      maximum: 100
+    FEpisodeDuration:
+      type: integer
+      nullable: true
+      example: null
+      minimum: 1
+      maximum: 30
+    FStatusId:
+      type: integer
+      nullable: true
+      example: null
+      enum:
+      - null
+      - 1
+      - 2
+      - 3
+      x-enumNames:
+      - Any
+      - Finished
+      - Ongoing
+      - Announced
+    FAgeRating:
+      type: integer
+      nullable: true
+      example: null
+      enum:
+      - null
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      x-enumNames:
+      - Any
+      - 0+
+      - 6+
+      - 12+
+      - 16+
+      - 18+
+    FSort:
+      type: integer
+      nullable: false
+      example: 0
+      enum:
+      - 0
+      - 1
+      - 2
+      - 3
+      x-enumNames:
+      - By Added Date
+      - By Rating
+      - By Year
+      - By Popularity
+    FType:
+      type: object
+      properties:
+        '@id':
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+        workers:
+          type: string
+        is_sub:
+          type: boolean
+        pinned:
+          type: boolean
+        episodes_count:
+          type: integer
+        view_count:
+          type: integer
+    IBaseRequest:
+      properties:
+        path:
+          type: string
+        json:
+          type: object
+        customBaseUrl:
+          type: string
+        bearer:
+          type: string
+        urlEncoded:
+          type: object
+        queryParams:
+          type: object
+        token:
+          type: string
+        signal: {}
+        method:
+          type: string
+        tokenRequired:
+          type: boolean
+        apiV2:
+          type: boolean
+        image:
+          properties:
+            name:
+              type: string
+            stream: {}
+            boundary:
+              type: string
+            type:
+              anyOf:
+              - enum:
+                - file
+                type: string
+              - enum:
+                - image
+                type: string
+          required:
+          - name
+          - stream
+          - type
+          additionalProperties: false
+          type: object
+      required:
+      - path
+      additionalProperties: false
+      type: object
+    IBaseRequestPageable:
+      properties:
+        page:
+          type: integer
+      required:
+      - page
+      additionalProperties: false
+      type: object
+    IBaseComment:
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        timestamp:
+          type: integer
+        type:
+          type: integer
+        vote:
+          type: integer
+        profile:
+          $ref: '#/components/schemas/IProfileShort'
+        parent_comment_id:
+          type: integer
+        vote_count:
+          type: integer
+        likes_count:
+          type: integer
+        is_spoiler:
+          type: boolean
+        is_edited:
+          type: boolean
+        is_deleted:
+          type: boolean
+        is_reply:
+          type: boolean
+        reply_count:
+          type: integer
+        can_like:
+          type: boolean
+      required:
+      - id
+      - message
+      - timestamp
+      - type
+      - vote
+      - profile
+      - parent_comment_id
+      - vote_count
+      - likes_count
+      - is_spoiler
+      - is_edited
+      - is_deleted
+      - is_reply
+      - reply_count
+      - can_like
+      additionalProperties: false
+      type: object
+    IBaseCompactComment:
+      type: object
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        is_spoiler:
+          type: boolean
+        profile:
+          $ref: '#/components/schemas/IProfileCompact'
+  parameters:
+    IParameterEmail:
+      name: email
+      in: query
+      description: account email
+      required: true
+      schema:
+        type: string
+    IParameterLogin:
+      name: login
+      in: query
+      description: account login or email
+      required: true
+      schema:
+        type: string
+    IParameterPassword:
+      name: password
+      in: query
+      description: account password
+      required: true
+      schema:
+        type: string
+    IParameterHash:
+      name: hash
+      in: query
+      description: verify hash
+      required: true
+      schema:
+        type: string
+    IParameterCode:
+      name: code
+      in: query
+      description: verify code
+      required: true
+      schema:
+        type: string
+    IParameterQueryPage:
+      name: page
+      in: path
+      description: page
+      required: true
+      schema:
+        type: integer
+        example: 0
+    IParameterPreviousPage:
+      name: previous_page
+      in: query
+      description: Current page - 1, should always be set
+      required: true
+      schema:
+        type: integer
+        example: -1
+    ICollectionAllSort:
+      name: sort
+      in: query
+      description: sort
+      required: true
+      schema:
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        example: episode
+        x-enumNames:
+        - All Time popular
+        - Popular this year
+        - Popular this season
+        - Popular this week
+        - Recently added
+        - Random
+    ICommentSort:
+      name: sort
+      in: query
+      description: sort
+      required: true
+      schema:
+        enum:
+        - 1
+        - 2
+        - 3
+        x-enumNames:
+        - Newest
+        - Oldest
+        - Popular
+    ICommentVotesSort:
+      name: sort
+      in: query
+      description: sort
+      required: true
+      schema:
+        enum:
+        - 0
+        - 1
+        - 2
+        x-enumNames:
+        - All
+        - Negative
+        - Positive
+    IParameterId:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: integer
+        example: 1
+    IParameterUserAgentHeader:
+      in: header
+      name: User-Agent
+      required: true
+      schema:
+        type: string
+        example: AnixartApp/9.0 BETA 9-25110702 (Android 13; SDK 33; x86_64; Waydroid
+          WayDroid x86_64 Device; en)
+    IParameterCommentVote:
+      in: path
+      name: vote
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        x-enumNames:
+        - Dislike
+        - Like
+        title: Vote Type
+    IParameterProfileList:
+      in: path
+      name: list
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        x-enumNames:
+        - NotWatching
+        - Watching
+        - PlanToWatch
+        - Completed
+        - OnHold
+        - Dropped
+    IParameterApiVersionHeader:
+      in: header
+      name: Api-Version
+      required: true
+      schema:
+        type: string
+        example: v2
+    IParameterSort:
+      in: query
+      name: sort
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        x-enumNames:
+        - NewToOldAddTime
+        - OldToNewAddTime
+        - NewToOldYear
+        - OldToNewYear
+        - AlpabetInAToZ
+        - AlpabetInZToA
+    IListParameterFilterAnnounce:
+      in: query
+      name: filter_announce
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 0
+        - 1
+        - 2
+        x-enumNames:
+        - IncludeAnnounces
+        - OnlyAnnounces
+        - ExcludeAnnounces
+    IParameterFriendRequestType:
+      in: path
+      name: type
+      required: true
+      schema:
+        type: string
+        enum:
+        - in
+        - out
+    IParameterVotedSort:
+      in: query
+      name: sort
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        x-enumNames:
+        - NewFirst
+        - OldFirst
+        - 5Stars
+        - 4Stars
+        - 3Stars
+        - 2Stars
+        - 1Star
+    IParameterExtendedMode:
+      in: query
+      name: extended_mode
+      required: true
+      example: true
+      schema:
+        type: boolean
+    IParameterReleaseVote:
+      in: path
+      name: vote
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+    IParameterEpisodeDubberId:
+      in: path
+      name: episodeDubberId
+      required: true
+      schema:
+        type: integer
+    IParameterEpisodeSourceId:
+      in: path
+      name: sourceId
+      required: true
+      schema:
+        type: integer
+    IParameterEpisodePosition:
+      in: path
+      name: episodePosition
+      required: true
+      schema:
+        type: integer
+    IParameterVideoCategory:
+      in: path
+      name: category
+      required: true
+      schema:
+        type: integer
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        x-enumNames:
+        - "\u0422\u0440\u0435\u0439\u043B\u0435\u0440\u044B"
+        - "\u041F\u0440\u0435\u0432\u044C\u044E"
+        - "\u041E\u043F\u0435\u043D\u0438\u043D\u0433\u0438"
+        - "\u042D\u043D\u0434\u0438\u043D\u0433\u0438"
+        - "\u041C\u0443\u0437 \u043A\u043B\u0438\u043F\u044B"
+  securitySchemes:
+    token:
+      type: apiKey
+      in: query
+      name: token
