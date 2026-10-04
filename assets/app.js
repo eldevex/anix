@@ -70,7 +70,7 @@
         + a('index.html?p=friends', 'Друзья', p === 'friends')
         + a('index.html?p=collections', 'Коллекции', p === 'collections')
         + a('index.html?p=profile', 'Профиль', p === 'profile')
-        + a('index.html?p=mylists', 'Коллекции', p === 'mylists');
+        + a('index.html?p=mylists', 'Мои подборки', p === 'mylists');
     }
     var btn = Auth.isAuth()
       ? '<a class="btn sm ghost" href="index.html?p=logout">Выйти</a>'
@@ -1305,7 +1305,7 @@
       return { html: h, after: wireColRows };
     }
     var names = Object.keys(cols);
-    var out = '<div class="page-title">📋 Мои коллекции</div>' +
+    var out = '<div class="page-title">📋 Мои подборки</div>' +
       '<div class="btn-row" style="margin-bottom:16px"><button class="btn primary" id="colNew">➕ Создать коллекцию</button></div>';
     if (!names.length) return { html: out + empty('Пока нет коллекций. Создавайте и добавляйте аниме из карточки релиза.'), after: wireColNew };
     out += '<div class="rows" id="colRows">' + names.map(function (n) {
