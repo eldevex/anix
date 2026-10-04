@@ -93,9 +93,11 @@
         if (opt.form !== undefined) payload.form = opt.form;
         else if (opt.body !== undefined) payload.body = opt.body;
         if (opt.apiV2) payload.apiV2 = true;
+        /* text/plain = простой запрос, без preflight OPTIONS (иначе CORS ломается)
+           proxy.php всё равно читает php://input и парсит JSON. */
         var popt = {
           method: 'POST', mode: 'cors', credentials: 'omit', cache: 'no-store',
-          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify(payload)
         };
         if (ctrl) popt.signal = ctrl.signal;
         res = await fetch(proxy, popt);
