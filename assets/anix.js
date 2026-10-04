@@ -12,7 +12,7 @@
     STATIC_FALLBACK: 'https://s.anixmirai.com',
     IFRAME: 'https://anixmirai.com/iframe?url=',
     UA: 'AnixartApp/9.0 BETA (Android 13; SDK 33)',
-    PROXY: ''   /* задаётся пользователем в Настройках (getProxy) */
+    PROXY: 'https://anixart.alwaysdata.net/proxy.php'
   };
 
   var WEEK = [['monday', 'Понедельник'], ['tuesday', 'Вторник'], ['wednesday', 'Среда'],
@@ -70,9 +70,14 @@
   /* Только эти пути требуют прокси (создание комментариев: API проверяет User-Agent,
      который браузер подставить не может). Всё остальное — напрямую. */
   function NEED_PROXY(path) {
+    /* Write-операции Anixart проверяют User-Agent (запрещён в браузерном Fetch),
+       поэтому идут через прокси. GET-эндпоинты — напрямую. */
     return /^\/release\/comment\/add\//.test(path)
+        || /^\/release\/comment\/edit\//.test(path)
         || /^\/collection\/comment\/add\//.test(path)
-        || /^\/article\/comment\/add\//.test(path);
+        || /^\/collection\/comment\/edit\//.test(path)
+        || /^\/article\/comment\/add\//.test(path)
+        || /^\/collectionMy\//.test(path);
   }
 
   async function req(method, path, opt) {
