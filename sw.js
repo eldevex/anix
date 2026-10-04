@@ -1,5 +1,5 @@
 /* AnixWeb service worker: оболочка кэшируется, API — всегда сеть. */
-var CACHE = 'anixweb-v8';
+var CACHE = 'anixweb-v9';
 var SHELL = ['./', './index.html', './assets/style.css', './assets/anix.js', './assets/app.js', './manifest.webmanifest', './assets/icon.svg'];
 
 self.addEventListener('install', function (e) {
