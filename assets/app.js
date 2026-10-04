@@ -742,7 +742,7 @@
         var nb = document.getElementById('colNewApi');
         if (nb) nb.addEventListener('click', function () {
           var t = prompt('Название коллекции:'); if (!t) return;
-          api.collectionCreate({ title: t }).then(function () { alert('Коллекция создана'); loadCollections('mine', 0, false); }).catch(function (er) { alert(er.message || er); });
+          api.collectionCreate({ title: t, description: '', releases: [], is_private: false }).then(function (r) { var cd = (r && r.code); if (cd === 0 || cd === undefined) { alert('Коллекция создана'); loadCollections('mine', 0, false); } else { alert('Не создано (code ' + cd + ')'); } }).catch(function (er) { alert(er.message || er); });
         });
         loadCollections(tab, 0, false);
       }
