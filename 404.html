@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnixWeb — переход…</title>
+<script>
+  // GitHub Pages отдаёт 404.html на любой несуществующий путь.
+  // Приложение использует роутинг через ?p=..., поэтому просто
+  // перенаправляем на index.html, сохраняя query и hash.
+  (function () {
+    var q = location.search || '';
+    var h = location.hash || '';
+    var base = location.pathname.replace(/\/[^\/]*$/, '/') + 'index.html';
+    location.replace(base + q + h);
+  })();
+</script>
+</head>
+<body>
+  <noscript>
+    <p>Перенаправление на <a href="index.html">AnixWeb</a>…</p>
+  </noscript>
+</body>
+</html>

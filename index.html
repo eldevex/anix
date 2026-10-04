@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AnixWeb — Anixart</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f1115">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">ANIXWEB</div>
+  <nav id="mainNav"></nav>
+  <div class="spacer"></div>
+  <div class="auth" id="authBox"></div>
+  <button class="burger" id="burgerBtn" aria-label="Меню"><span></span><span></span><span></span></button>
+</header>
+
+<form class="searchbar" id="searchForm" method="get" action="index.html">
+  <input type="hidden" name="p" value="search">
+  <input type="text" name="q" placeholder="Поиск аниме по названию…" value="">
+  <button type="submit">🔍</button>
+</form>
+
+<main class="container" id="app"><div class="empty">Загрузка…</div></main>
+
+<footer class="footer">
+  <span class="foot-pill">AnixWeb · неофициальный клиент Anixart</span><br>
+  Запросы идут напрямую из браузера к API Anixart. Токен хранится только в этом браузере.
+</footer>
+
+<script src="assets/anix.js?v=1"></script>
+<script src="assets/app.js?v=1"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

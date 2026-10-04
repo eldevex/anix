@@ -1,0 +1,15 @@
+{
+  "name": "AnixWeb — Anixart",
+  "short_name": "AnixWeb",
+  "description": "Неофициальный браузерный клиент Anixart",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115",
+  "lang": "ru",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
