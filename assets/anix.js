@@ -88,7 +88,10 @@
       Auth.clear();
       throw new AuthError('Сессия Anixart истекла. Войдите заново.');
     }
-    if (data === null) throw new Error('Anixart вернул некорректный ответ (HTTP ' + res.status + ')');
+    if (data === null) {
+      if (res.ok) return {};
+      throw new Error('Anixart вернул некорректный ответ (HTTP ' + res.status + ')');
+    }
     return data;
   }
 

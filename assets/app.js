@@ -382,9 +382,10 @@
         var text = ta ? ta.value.trim() : '';
         if (!text) return;
         var body = { message: text };
-        if (parent) body.parent_comment = parent;
+        if (parent) body.parentCommentId = parent;
         await api.releaseCommentAdd(id, body);
-        loadComments(id, 0, false);
+        if (ta) ta.value = '';
+        await loadComments(id, 0, false);
       } else if (act === 'like') {
         await api.releaseCommentVote(id, 2); loadComments(cmtState.id, 0, false);
       } else if (act === 'dislike') {
