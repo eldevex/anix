@@ -571,8 +571,8 @@
     var d, list = [], meta = null;
     try {
       if (tab === 'friends') d = await api.friends(myId(), frState.page);
-      else if (tab === 'in') d = await api.friendRequests(1, frState.page);
-      else if (tab === 'out') d = await api.friendRequests(0, frState.page);
+      else if (tab === 'in') d = await api.friendRequests('in', frState.page);
+      else if (tab === 'out') d = await api.friendRequests('out', frState.page);
       else if (tab === 'reco') d = await api.friendRecommendations();
       else if (tab === 'subs') d = await api.channelSubscriptions(frState.page);
     } catch (e) { box.innerHTML = errBox(e); return; }

@@ -429,3 +429,25 @@ max-width:100%;
 .col-title { font-weight:700; font-size:14px; line-height:1.25; }
 .col-sub { color:var(--text-mute); font-size:12px; margin-top:2px; }
 .desc { color:var(--text-mute); font-size:14px; line-height:1.5; margin-top:6px; }
+
+/* ---------------- сброс нативных элементов форм ---------------- */
+/* Чтобы <button class="btn"> выглядел идентично <a class="btn"> */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  line-height: 1.35;
+}
+button { -webkit-appearance: none; appearance: none; }
+.btn, .chip, .ntf-tab, .cmt-act, .pager a, .pager span {
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.cmt-input, textarea { font-family: inherit; }
+
+/* fallback: кнопка без класса (напр.  в поиске профиля) */
+button { cursor: pointer; }
+.searchbar button {
+  background: transparent; border: none; color: var(--text); cursor: pointer; font-size: 17px;
+}
